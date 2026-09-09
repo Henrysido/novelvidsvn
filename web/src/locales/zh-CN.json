@@ -1,1 +1,29 @@
-{}
+{
+  "common": {
+    "confirm": "确认",
+    "cancel": "取消"
+  },
+  "nav": {
+    "brandName": "猫影",
+    "brandHomeLabel": "猫影首页",
+    "mainNavLabel": "主导航",
+    "home": "首页",
+    "creation": "创作",
+    "shortDrama": "短剧制作",
+    "remakeWorkshop": "重制工坊",
+    "personal": "我的",
+    "projects": "项目",
+    "assets": "资产",
+    "billing": "成本",
+    "settings": "设置",
+    "admin": "管理",
+    "members": "成员管理",
+    "teams": "团队管理",
+    "users": "用户管理",
+    "switchTeam": "切换团队",
+    "superAdminLabel": "平台管理员 · 全部团队",
+    "userCenter": "用户中心：{name}",
+    "walletBalance": "余额 ¥{amount}",
+    "walletLimit": "限额 ¥{amount}"
+  }
+}

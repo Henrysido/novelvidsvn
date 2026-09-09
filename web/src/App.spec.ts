@@ -4,6 +4,7 @@ import { createPinia, setActivePinia, type Pinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import App from './App.vue'
 import { useAuthStore } from '@/features/auth/authStore'
+import i18n from '@/locales'
 
 function mountApp(pinia: Pinia) {
   const router = createRouter({
@@ -15,7 +16,7 @@ function mountApp(pinia: Pinia) {
   })
   return mount(App, {
     global: {
-      plugins: [pinia, router],
+      plugins: [pinia, router, i18n],
       stubs: { RouterView: { template: '<div />' } },
     },
   })
