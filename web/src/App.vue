@@ -7,6 +7,7 @@ import { notice } from '@/shared/notice'
 import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
 import AppNotice from '@/components/AppNotice.vue'
 import AppThemeToggle from '@/components/AppThemeToggle.vue'
+import AppLanguageToggle from '@/components/AppLanguageToggle.vue'
 import { useAppThemeController } from '@/shared/appTheme'
 import { isWorkflowThemeSurface } from '@/shared/themeScope'
 import { useAuthStore } from '@/features/auth/authStore'
@@ -139,9 +140,11 @@ function handleTeamSwitch(event: Event) {
           <small v-if="walletLabel" class="app-user-wallet">{{ walletLabel }}</small>
         </span>
       </RouterLink>
+      <AppLanguageToggle v-if="!isWorkflowSurface" placement="sidebar" />
       <AppThemeToggle v-if="!isWorkflowSurface" placement="sidebar" />
     </aside>
     <section class="app-content" :class="{ 'is-fullscreen': isFullscreen }"><RouterView /></section>
+    <AppLanguageToggle v-if="isFullscreen && !isWorkflowSurface" />
     <AppThemeToggle v-if="isFullscreen && !isWorkflowSurface" />
     <AppConfirmDialog :dark="confirmDialogDark" />
     <TransitionGroup name="notice" tag="div" class="notice-stack" aria-live="polite"><AppNotice v-for="item in notice.state.notices" :key="item.id" :item="item" /></TransitionGroup>

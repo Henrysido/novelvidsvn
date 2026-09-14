@@ -1,6 +1,20 @@
-import { enableAutoUnmount } from '@vue/test-utils'
+import { config, enableAutoUnmount } from '@vue/test-utils'
 import '@testing-library/jest-dom/vitest'
 import { afterEach } from 'vitest'
+import Module from 'node:module'
+import i18n from '@/locales'
+
+config.global.plugins.push(i18n)
+
+if (process.platform === 'win32') {
+  const origCreateRequire = Module.createRequire
+  Module.createRequire = function (filenameOrURL: string | URL) {
+    if (typeof filenameOrURL === 'string' && filenameOrURL.startsWith('file:///') && !filenameOrURL.match(/^file:\/\/\/[a-zA-Z]:/)) {
+      return origCreateRequire.call(this, process.cwd() + '\\dummy.js')
+    }
+    return origCreateRequire.call(this, filenameOrURL)
+  }
+}
 
 enableAutoUnmount(afterEach)
 

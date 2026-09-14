@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { api } from '@/api'
 import { notice } from '@/shared/notice'
 import { useAuthStore } from '@/features/auth/authStore'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 
 const passwordForm = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
@@ -13,7 +15,11 @@ const displayName = computed(() => auth.user?.nickname || auth.user?.username ||
 const avatarText = computed(() => displayName.value.slice(0, 1).toUpperCase())
 const totalCost = computed(() => Number(auth.totalCost ?? 0).toFixed(2))
 const registeredAt = computed(() => auth.user?.created_at || '—')
-const roleLabel = (role: string) => ({ admin: '团队管理员', creator: '创作者', viewer: '查看者' }[role] || role)
+const roleLabel = (role: string) => ({
+  admin: t('profile.roleAdmin'),
+  creator: t('profile.roleCreator'),
+  viewer: t('profile.roleViewer'),
+}[role] || role)
 const money = (value: number | string | null | undefined) => {
   const parsed = Number(value ?? 0)
   return Number.isFinite(parsed) ? parsed.toFixed(2) : '0.00'
@@ -23,16 +29,16 @@ async function changePassword() {
   const { oldPassword, newPassword, confirmPassword } = passwordForm.value
   if (!oldPassword || newPassword.length < 8) return
   if (newPassword !== confirmPassword) {
-    notice.error('两次输入的新密码不一致')
+    notice.error(t('profile.toastPasswordMatch'))
     return
   }
   changing.value = true
   try {
     await api.changePassword(oldPassword, newPassword)
-    notice.success('密码已修改')
+    notice.success(t('profile.toastPasswordChanged'))
     passwordForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
   } catch (error) {
-    notice.error(error instanceof Error ? error.message : '修改密码失败')
+    notice.error(error instanceof Error ? error.message : t('profile.toastPasswordFailed'))
   } finally {
     changing.value = false
   }
@@ -58,63 +64,63 @@ onMounted(async () => {
       <div class="profile-avatar">{{ avatarText }}</div>
       <div class="profile-identity">
         <h1>{{ displayName }}</h1>
-        <p>@{{ auth.user?.username }}<span v-if="auth.isSuperAdmin" class="profile-role">超级管理员</span></p>
+        <p>@{{ auth.user?.username }}<span v-if="auth.isSuperAdmin" class="profile-role">{{ $t('profile.superAdmin') }}</span></p>
       </div>
     </header>
 
     <section class="profile-grid">
       <div class="profile-card">
-        <h2>我的信息</h2>
+        <h2>{{ $t('profile.myInfo') }}</h2>
         <dl class="profile-stats">
           <div>
-            <dt>历史创作花费</dt>
+            <dt>{{ $t('profile.historyCost') }}</dt>
             <dd class="cost">¥ {{ totalCost }}</dd>
           </div>
           <div>
-            <dt>注册时间</dt>
+            <dt>{{ $t('profile.regDate') }}</dt>
             <dd>{{ registeredAt }}</dd>
           </div>
         </dl>
       </div>
 
       <div class="profile-card">
-        <h2>加入的团队</h2>
-        <p v-if="!auth.memberships.length" class="dim">尚未加入任何团队</p>
+        <h2>{{ $t('profile.joinedTeams') }}</h2>
+        <p v-if="!auth.memberships.length" class="dim">{{ $t('profile.noTeams') }}</p>
         <ul v-else class="team-list">
           <li v-for="item in auth.memberships" :key="item.team_id">
             <div class="team-info">
               <strong>{{ item.team_name }}</strong>
-              <span>{{ roleLabel(item.role) }}<template v-if="item.status === 0"> · 已禁用</template></span>
+              <span>{{ roleLabel(item.role) }}<template v-if="item.status === 0"> · {{ $t('profile.disabled') }}</template></span>
             </div>
             <div class="team-meta">
-              <span>累计 ¥{{ money(item.total_cost) }}</span>
-              <span v-if="item.joined_at">加入于 {{ item.joined_at }}</span>
+              <span>{{ $t('profile.total') }} ¥{{ money(item.total_cost) }}</span>
+              <span v-if="item.joined_at">{{ $t('profile.joinedAt') }} {{ item.joined_at }}</span>
             </div>
           </li>
         </ul>
       </div>
 
       <div class="profile-card">
-        <h2>修改密码</h2>
+        <h2>{{ $t('profile.changePwd') }}</h2>
         <form class="password-form" @submit.prevent="changePassword">
           <label>
-            <span>当前密码</span>
+            <span>{{ $t('profile.currentPwd') }}</span>
             <input v-model="passwordForm.oldPassword" type="password" autocomplete="current-password" required />
           </label>
           <label>
-            <span>新密码（至少 8 位）</span>
+            <span>{{ $t('profile.newPwd') }}</span>
             <input v-model="passwordForm.newPassword" type="password" autocomplete="new-password" required minlength="8" />
           </label>
           <label>
-            <span>确认新密码</span>
+            <span>{{ $t('profile.confirmNewPwd') }}</span>
             <input v-model="passwordForm.confirmPassword" type="password" autocomplete="new-password" required minlength="8" />
           </label>
-          <button type="submit" class="primary-button" :disabled="changing">{{ changing ? '提交中…' : '修改密码' }}</button>
+          <button type="submit" class="primary-button" :disabled="changing">{{ changing ? $t('profile.submittingPwd') : $t('profile.submitPwd') }}</button>
         </form>
       </div>
     </section>
 
-    <button type="button" class="logout-button" @click="logout">退出登录</button>
+    <button type="button" class="logout-button" @click="logout">{{ $t('profile.logout') }}</button>
   </main>
 </template>
 

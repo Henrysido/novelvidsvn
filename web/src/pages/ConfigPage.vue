@@ -22,12 +22,15 @@ import {
 import AppMultiSelect from '@/components/AppMultiSelect.vue'
 import AppIconTile from '@/components/AppIconTile.vue'
 import AppTabs, { type AppTabItem } from '@/components/AppTabs.vue'
+import { useI18n } from 'vue-i18n'
 import { api } from '@/api'
 import { defaultPricing } from '@/shared/modelPricing'
 import { useAuthStore } from '@/features/auth/authStore'
 import { appConfirm } from '@/shared/confirmDialog'
 import { notice } from '@/shared/notice'
 import type { AiModelConfig, ConfigEnumItem, EnumItem, GeneralConfig, GenerationCapabilities, ImageApiProtocol, ImageModelType, ModelPricing, VideoGenerationModelType } from '@/types'
+
+const { t } = useI18n()
 
 type ModelCategoryId = 'llm' | 'image' | 'video'
 type SettingsSection = 'models' | 'general'
@@ -44,33 +47,33 @@ interface ModelCategory {
 const categories: ModelCategory[] = [
   {
     id: 'llm',
-    label: 'LLM 大模型',
-    eyebrow: 'LANGUAGE',
-    description: '负责剧本理解、人物提取、分镜文本生成与来源视频拆解。',
+    get label() { return t('config.llmTitle') },
+    get eyebrow() { return t('config.llmEyebrow') },
+    get description() { return t('config.llmDesc') },
     taskTypes: [1, 3, 5, 6],
     icon: Bot,
   },
   {
     id: 'image',
-    label: '生图模型',
-    eyebrow: 'IMAGE',
-    description: '负责角色定妆、场景概念图和一致性参考图生成。',
+    get label() { return t('config.imageTitle') },
+    get eyebrow() { return t('config.imageEyebrow') },
+    get description() { return t('config.imageDesc') },
     taskTypes: [2],
     icon: Image,
   },
   {
     id: 'video',
-    label: '视频模型',
-    eyebrow: 'VIDEO',
-    description: '负责分镜片段生成、动态镜头和最终视频合成。',
+    get label() { return t('config.videoTitle') },
+    get eyebrow() { return t('config.videoEyebrow') },
+    get description() { return t('config.videoDesc') },
     taskTypes: [4],
     icon: Video,
   },
 ]
-const settingsTabs: AppTabItem[] = [
-  { value: 'models', label: '模型配置', icon: Bot },
-  { value: 'general', label: '通用配置', icon: Settings2 },
-]
+const settingsTabs = computed<AppTabItem[]>(() => [
+  { value: 'models', label: t('config.modelsTab'), icon: Bot },
+  { value: 'general', label: t('config.generalTab'), icon: Settings2 },
+])
 
 const VIDEO_MODEL_PRESETS: Record<VideoGenerationModelType, { baseUrl: string; model: string; protocol: ImageApiProtocol }> = {
   seedance_2: { baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', model: 'doubao-seedance-2-0-260128', protocol: 'volcengine_ark' },

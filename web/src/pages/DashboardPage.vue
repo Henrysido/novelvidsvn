@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ArrowRight, BookOpen, Trash2 } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { api } from '@/api'
 import { appConfirm } from '@/shared/confirmDialog'
 import { notice } from '@/shared/notice'
 import { projectEntryRoute } from '@/shared/shortDramaProject'
 import { fallbackImage } from '@/shared/mediaFallback'
 import type { Novel } from '@/types'
+
+const { t } = useI18n()
 
 const novels = ref<Novel[]>([])
 const loading = ref(true)
@@ -24,9 +27,9 @@ async function load() {
 
 async function remove(item: Novel) {
   if (!await appConfirm({
-    title: `删除项目「${item.name}」？`,
-    message: '项目、章节及相关创作数据将被删除，且无法恢复。',
-    confirmLabel: '删除项目',
+    title: t('projects.deleteConfirm', { name: item.name }),
+    message: t('projects.deleteWarning'),
+    confirmLabel: t('projects.deleteButton'),
     tone: 'danger',
   })) return
   await api.deleteNovel(item.id)
@@ -40,13 +43,13 @@ onMounted(load)
   <main class="page">
     <header class="page-header">
       <div>
-        <span class="eyebrow">PROJECTS</span>
-        <h1>我的项目</h1>
-        <p>管理小说、剧本与视频创作空间</p>
+        <span class="eyebrow">{{ $t('projects.eyebrow') }}</span>
+        <h1>{{ $t('projects.title') }}</h1>
+        <p>{{ $t('projects.desc') }}</p>
       </div>
     </header>
 
-    <div v-if="loading" class="state">正在加载项目…</div>
+    <div v-if="loading" class="state">{{ $t('projects.loading') }}</div>
     <div v-else-if="novels.length" class="project-grid">
       <RouterLink
         v-for="item in novels"
@@ -70,15 +73,15 @@ onMounted(load)
         </div>
         <div>
           <h3>{{ item.name }}</h3>
-          <p>{{ item.description || '暂无简介' }}</p>
-          <small>{{ item.author || '未署名' }} · {{ item.total_chapters || 0 }} 章</small>
+          <p>{{ item.description || $t('projects.noSummary') }}</p>
+          <small>{{ item.author || $t('projects.anonymous') }} · {{ $t('projects.chapterCount', { count: item.total_chapters || 0 }) }}</small>
         </div>
         <AppButton
           type="button"
           variant="danger"
           size="sm"
           icon-only
-          aria-label="删除项目"
+          :aria-label="$t('projects.deleteButton')"
           @click.prevent="remove(item)"
         >
           <Trash2 :size="15" />
@@ -87,10 +90,10 @@ onMounted(load)
     </div>
     <div v-else class="empty-state">
       <BookOpen :size="32" />
-      <h3>暂无项目</h3>
-      <p>请前往“创作”开始新的短剧项目</p>
+      <h3>{{ $t('projects.empty') }}</h3>
+      <p>{{ $t('projects.emptyHint') }}</p>
       <RouterLink to="/create/short-drama" class="empty-state-action">
-        前往创作
+        {{ $t('projects.goToCreation') }}
         <ArrowRight :size="15" aria-hidden="true" />
       </RouterLink>
     </div>

@@ -11,7 +11,15 @@ export default defineConfig({
       '/media': { target: 'http://127.0.0.1:9000', changeOrigin: true },
     },
   },
-  plugins: [vue()],
+  plugins: [
+    vue({
+      template: {
+        transformAssetUrls: {
+          includeAbsolute: false,
+        },
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

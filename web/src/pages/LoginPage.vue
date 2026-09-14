@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../features/auth/authStore'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
@@ -14,7 +16,7 @@ const submitting = ref(false)
 
 async function submit() {
   if (!username.value.trim() || !password.value) {
-    errorMessage.value = '请输入用户名和密码'
+    errorMessage.value = t('login.errorEmpty')
     return
   }
   submitting.value = true
@@ -24,7 +26,7 @@ async function submit() {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     await router.replace(redirect)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '登录失败，请重试'
+    errorMessage.value = error instanceof Error ? error.message : t('login.errorFailed')
   } finally {
     submitting.value = false
   }
@@ -34,20 +36,20 @@ async function submit() {
 <template>
   <main class="login-page">
     <form class="login-card" @submit.prevent="submit">
-      <img class="login-logo" src="/logo.png" alt="猫影" />
-      <h1>登录</h1>
-      <p class="login-subtitle">登录后继续使用猫影短剧</p>
+      <img class="login-logo" src="/logo.png" :alt="$t('nav.brandName')" />
+      <h1>{{ $t('login.title') }}</h1>
+      <p class="login-subtitle">{{ $t('login.subtitle') }}</p>
       <label class="login-field">
-        <span>用户名</span>
-        <input v-model="username" type="text" autocomplete="username" placeholder="请输入用户名" />
+        <span>{{ $t('login.username') }}</span>
+        <input v-model="username" type="text" autocomplete="username" :placeholder="$t('login.usernamePlaceholder')" />
       </label>
       <label class="login-field">
-        <span>密码</span>
-        <input v-model="password" type="password" autocomplete="current-password" placeholder="请输入密码" />
+        <span>{{ $t('login.password') }}</span>
+        <input v-model="password" type="password" autocomplete="current-password" :placeholder="$t('login.passwordPlaceholder')" />
       </label>
       <p v-if="errorMessage" class="login-error" role="alert">{{ errorMessage }}</p>
       <button class="login-submit" type="submit" :disabled="submitting">
-        {{ submitting ? '登录中…' : '登 录' }}
+        {{ submitting ? $t('login.submitting') : $t('login.submit') }}
       </button>
     </form>
   </main>

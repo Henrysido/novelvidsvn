@@ -19,9 +19,12 @@ import {
 import AppSelect from '@/components/AppSelect.vue'
 import CreationConfigBar from '@/components/CreationConfigBar.vue'
 import CreationEntryShell from '@/components/CreationEntryShell.vue'
+import { useI18n } from 'vue-i18n'
 import { api } from '@/api'
 import { notice } from '@/shared/notice'
 import type { StoryboardStrategy } from '@/types'
+
+const { t } = useI18n()
 
 type CreationMode = 'agent' | 'manual'
 
@@ -125,11 +128,11 @@ function chooseFile() {
 function validateFile(file: File) {
   const extension = file.name.split('.').pop()?.toLowerCase()
   if (!extension || !['doc', 'docx', 'txt', 'pdf', 'md'].includes(extension)) {
-    notice.error('仅支持 doc、docx、txt、pdf 和 md 格式')
+    notice.error(t('shortDrama.toastExt'))
     return false
   }
   if (file.size > 20 * 1024 * 1024) {
-    notice.error('剧本文件不能超过 20 MB')
+    notice.error(t('shortDrama.toastSize'))
     return false
   }
   return true
@@ -157,14 +160,14 @@ function removeFile(event: MouseEvent) {
 
 async function createProject() {
   if (isAgentMode.value && !selectedFile.value) {
-    notice.info('请先上传剧本文件')
+    notice.info(t('shortDrama.toastUploadPrompt'))
     return
   }
   if (styleId.value === 'custom' && !customPrompt.value.trim()) {
-    notice.info('请填写自定义风格 Prompt')
+    notice.info(t('shortDrama.toastCustomPrompt'))
     return
   }
-  const modeLabel = mode.value === 'agent' ? 'Agent 模式' : '人工模式'
+  const modeLabel = mode.value === 'agent' ? t('shortDrama.agentMode') : t('shortDrama.manualMode')
   if (isAgentMode.value && selectedFile.value) {
     const projectName = selectedFile.value.name.replace(/\.[^.]+$/, '') || '未命名短剧'
     creating.value = true
@@ -246,7 +249,7 @@ async function createProject() {
       styleKey: styleId.value,
       storyboardStrategy: storyboardStrategy.value,
     }))
-    notice.success('人工短剧项目已创建，正在进入设定工作区')
+    notice.success(t('shortDrama.toastSuccess'))
     await router.push({ name: 'short-drama-manual', params: { projectId: response.data.id } })
   } catch (error) {
     notice.error((error as Error).message)
@@ -259,9 +262,9 @@ async function createProject() {
 <template>
   <CreationEntryShell
     eyebrow="AI SHORT DRAMA"
-    :description="isAgentMode ? '上传完整故事，让 Agent 自动完成内容理解与制作规划。' : '从空白项目开始，手动掌控角色、场景、分镜和镜头细节。'"
+    :description="isAgentMode ? $t('shortDrama.agentDesc') : $t('shortDrama.manualDesc')"
   >
-    <template #title>翻开剧本，创作<span class="creation-entry-accent">精品短剧</span></template>
+    <template #title>{{ $t('shortDrama.titlePrefix') }}<span class="creation-entry-accent">{{ $t('shortDrama.titleAccent') }}</span></template>
       <form class="short-drama-form" @submit.prevent="createProject">
         <Transition name="mode-panel" mode="out-in">
           <AppButton
@@ -282,13 +285,13 @@ async function createProject() {
             <template v-if="selectedFile">
               <span class="dropzone-icon has-file"><FileText :size="25" /></span>
               <strong>{{ selectedFile.name }}</strong>
-              <small>{{ formattedFileSize }} · 点击重新选择文件</small>
-              <span class="remove-file" role="button" aria-label="移除剧本" tabindex="0" @click="removeFile"><X :size="15" /></span>
+              <small>{{ formattedFileSize }} · {{ $t('shortDrama.reselectFile') }}</small>
+              <span class="remove-file" role="button" :aria-label="$t('shortDrama.removeFile')" tabindex="0" @click="removeFile"><X :size="15" /></span>
             </template>
             <template v-else>
               <span class="dropzone-icon"><UploadCloud :size="27" /></span>
-              <strong>点击或拖拽剧本至此</strong>
-              <small>支持 doc、docx、txt、pdf 和 md 格式，文件大小不超过 20 MB</small>
+              <strong>{{ $t('shortDrama.dropzoneDefault') }}</strong>
+              <small>{{ $t('shortDrama.dropzoneHint') }}</small>
             </template>
           </AppButton>
 
@@ -296,49 +299,49 @@ async function createProject() {
             <span class="manual-mode-icon"><PencilLine :size="25" /></span>
             <div class="manual-mode-copy">
               <p>MANUAL WORKSPACE</p>
-              <h2 id="manual-mode-title">从空白项目开始</h2>
-              <span>不上传剧本，进入工作台后手动建立创作内容与生产流程。</span>
+              <h2 id="manual-mode-title">{{ $t('shortDrama.manualTitle') }}</h2>
+              <span>{{ $t('shortDrama.manualDescShort') }}</span>
             </div>
-            <div class="manual-mode-features" aria-label="人工模式能力">
-              <span><Layers3 :size="15" />自由搭建</span>
-              <span><PencilLine :size="15" />逐步编辑</span>
-              <span><SlidersHorizontal :size="15" />精细控制</span>
+            <div class="manual-mode-features" :aria-label="$t('shortDrama.manualMode')">
+              <span><Layers3 :size="15" />{{ $t('shortDrama.manualFeature1') }}</span>
+              <span><PencilLine :size="15" />{{ $t('shortDrama.manualFeature2') }}</span>
+              <span><SlidersHorizontal :size="15" />{{ $t('shortDrama.manualFeature3') }}</span>
             </div>
           </section>
         </Transition>
 
-        <CreationConfigBar modes-label="创作模式">
+        <CreationConfigBar :modes-label="$t('shortDrama.modesLabel')">
           <template #modes>
             <AppButton type="button" variant="soft" size="sm" :active="mode === 'agent'" @click="mode = 'agent'">
-              <Bot :size="15" />Agent 模式
+              <Bot :size="15" />{{ $t('shortDrama.agentMode') }}
             </AppButton>
             <AppButton type="button" variant="soft" size="sm" :active="mode === 'manual'" @click="mode = 'manual'">
-              <UserRound :size="15" />人工模式
+              <UserRound :size="15" />{{ $t('shortDrama.manualMode') }}
             </AppButton>
           </template>
 
           <AppSelect
             v-model="storyboardStrategy"
             class="strategy-select"
-            ariaLabel="分镜策略"
-            menu-label="分镜策略"
+            :ariaLabel="$t('shortDrama.strategyLabel')"
+            :menu-label="$t('shortDrama.strategyLabel')"
             :menu-width="220"
             :options="storyboardStrategyOptions"
             :disabled="!storyboardStrategyOptions.length"
           >
             <template #leading><Clapperboard :size="15" /></template>
           </AppSelect>
-          <AppSelect v-model="aspectRatio" class="format-select" ariaLabel="画面比例" :options="aspectRatios">
+          <AppSelect v-model="aspectRatio" class="format-select" :ariaLabel="$t('shortDrama.aspectRatioLabel')" :options="aspectRatios">
             <template #leading><Film :size="15" /></template>
           </AppSelect>
-          <AppSelect v-model="resolution" class="format-select" ariaLabel="分辨率" :options="resolutions">
+          <AppSelect v-model="resolution" class="format-select" :ariaLabel="$t('shortDrama.resolutionLabel')" :options="resolutions">
             <template #leading><Monitor :size="15" /></template>
           </AppSelect>
           <AppSelect
             v-model="styleId"
             class="style-select"
-            ariaLabel="视觉风格"
-            menu-label="风格"
+            :ariaLabel="$t('shortDrama.styleLabel')"
+            :menu-label="$t('shortDrama.styleLabel')"
             :menu-width="230"
             :max-menu-height="404"
             align="end"
@@ -356,13 +359,13 @@ async function createProject() {
         </CreationConfigBar>
 
         <div v-if="styleId === 'custom'" class="custom-prompt-panel">
-          <label for="custom-style-prompt">自定义风格 Prompt</label>
+          <label for="custom-style-prompt">{{ $t('shortDrama.customPromptLabel') }}</label>
           <textarea
             id="custom-style-prompt"
             v-model="customPrompt"
             maxlength="2000"
             rows="4"
-            placeholder="描述画面质感、色彩、人物造型、灯光和镜头语言，例如：东方电影感，低饱和青绿色调，自然光，细腻皮肤质感……"
+            :placeholder="$t('shortDrama.customPromptPlaceholder')"
           />
           <small>{{ customPrompt.length }} / 2000</small>
         </div>
@@ -371,7 +374,7 @@ async function createProject() {
           <span>
             <Sparkles v-if="!creating && isAgentMode" :size="18" />
             <PencilLine v-else-if="!creating" :size="18" />
-            {{ creating ? '正在创建项目…' : isAgentMode ? '创建 Agent 短剧项目' : '创建人工短剧项目' }}
+            {{ creating ? $t('shortDrama.creatingButton') : isAgentMode ? $t('shortDrama.createAgentProject') : $t('shortDrama.createManualProject') }}
           </span>
           <ArrowRight class="create-arrow" :size="18" />
         </AppButton>
