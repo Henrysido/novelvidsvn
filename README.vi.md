@@ -44,7 +44,25 @@ Hệ thống hỗ trợ 2 chế độ sáng tạo:
 
 ## 📦 Hướng dẫn cài đặt & Khởi chạy
 
-### 1. Cài đặt & Khởi chạy Backend (FastAPI)
+### 🚀 Cách nhanh nhất: Chạy trọn gói bằng Docker (Khuyên dùng)
+
+Ứng dụng đã được đóng gói sẵn toàn bộ Backend, Frontend Nginx và FFmpeg:
+
+```bash
+# Khởi chạy ứng dụng (truy cập tại http://localhost:8080)
+./start.sh
+# Hoặc: docker compose up -d
+
+# Dừng ứng dụng
+./stop.sh
+# Hoặc: docker compose down
+```
+
+---
+
+### 🛠️ Cách thủ công (Dành cho nhà phát triển mã nguồn)
+
+#### 1. Cài đặt & Khởi chạy Backend (FastAPI)
 
 Mở terminal trong thư mục gốc `novelvids`:
 

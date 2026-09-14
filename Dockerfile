@@ -19,6 +19,9 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH"
 
+# 安装 ffmpeg 运行时依赖
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+
 # 复制虚拟环境与应用代码
 COPY --from=builder /app/.venv /app/.venv
 COPY . .
