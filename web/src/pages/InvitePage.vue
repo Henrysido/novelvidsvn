@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/api'
 import { notice } from '@/shared/notice'
 import { useAuthStore } from '@/features/auth/authStore'
 import type { InviteItem } from '@/types'
+
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -18,11 +22,18 @@ const joining = ref(false)
 const registerForm = ref({ username: '', nickname: '', password: '' })
 const registering = ref(false)
 
+const roleLabel = (role: string) => {
+  if (isVi.value) {
+    return ({ admin: 'Quản trị viên nhóm', creator: 'Nhà sáng tạo', viewer: 'Người xem' }[role] || role)
+  }
+  return ({ admin: '团队管理员', creator: '创作者', viewer: '查看者' }[role] || role)
+}
+
 async function load() {
   try {
     invite.value = await api.teamInviteInfo(token).then(response => response.data)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '邀请链接无效'
+    errorMessage.value = error instanceof Error ? error.message : (isVi.value ? 'Liên kết lời mời không hợp lệ' : '邀请链接无效')
   } finally {
     loading.value = false
   }
@@ -35,10 +46,10 @@ async function join() {
   try {
     await api.joinTeamInvite(token)
     await auth.refreshMe()
-    notice.success(`已加入「${invite.value.team_name}」`)
+    notice.success(isVi.value ? `Đã tham gia「${invite.value.team_name}」` : `已加入「${invite.value.team_name}」`)
     await router.replace('/')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '加入失败'
+    errorMessage.value = error instanceof Error ? error.message : (isVi.value ? 'Tham gia thất bại' : '加入失败')
   } finally {
     joining.value = false
   }
@@ -55,10 +66,10 @@ async function register() {
       password: registerForm.value.password,
       invite_token: token,
     })
-    notice.success(`欢迎加入「${invite.value?.team_name ?? ''}」`)
+    notice.success(isVi.value ? `Chào mừng gia nhập「${invite.value?.team_name ?? ''}」` : `欢迎加入「${invite.value?.team_name ?? ''}」`)
     await router.replace('/')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '注册失败'
+    errorMessage.value = error instanceof Error ? error.message : (isVi.value ? 'Đăng ký thất bại' : '注册失败')
   } finally {
     registering.value = false
   }
@@ -70,42 +81,43 @@ onMounted(load)
 <template>
   <main class="invite-page">
     <section class="invite-card">
-      <p v-if="loading" class="dim">加载邀请信息…</p>
+      <p v-if="loading" class="dim">{{ isVi ? 'Đang tải thông tin lời mời…' : '加载邀请信息…' }}</p>
 
       <template v-else-if="invite">
-        <img class="invite-logo" src="/logo.png" alt="猫影" />
-        <h1>加入「{{ invite.team_name }}」</h1>
-        <p class="invite-subtitle">你受邀加入该团队，角色：{{ { admin: '团队管理员', creator: '创作者', viewer: '查看者' }[invite.role] }}</p>
+        <img class="invite-logo" src="/logo.png" :alt="isVi ? 'NovelVids' : '猫影'" />
+        <h1>{{ isVi ? `Tham gia「${invite.team_name}」` : `加入「${invite.team_name}」` }}</h1>
+        <p class="invite-subtitle">{{ isVi ? `Bạn được mời tham gia nhóm này với vai trò: ${roleLabel(invite.role)}` : `你受邀加入该团队，角色：${roleLabel(invite.role)}` }}</p>
 
         <template v-if="auth.isLoggedIn">
           <button class="primary-button" type="button" :disabled="joining" @click="join">
-            {{ joining ? '加入中…' : '加入团队' }}
+            {{ joining ? (isVi ? 'Đang tham gia…' : '加入中…') : (isVi ? 'Tham gia nhóm' : '加入团队') }}
           </button>
         </template>
         <form v-else class="register-form" @submit.prevent="register">
           <label>
-            <span>用户名</span>
-            <input v-model="registerForm.username" type="text" autocomplete="username" placeholder="设置登录用户名" required />
+            <span>{{ isVi ? 'Tên người dùng' : '用户名' }}</span>
+            <input v-model="registerForm.username" type="text" autocomplete="username" :placeholder="isVi ? 'Đặt tên tài khoản đăng nhập' : '设置登录用户名'" required />
           </label>
           <label>
-            <span>昵称（可选）</span>
-            <input v-model="registerForm.nickname" type="text" placeholder="你的昵称" />
+            <span>{{ isVi ? 'Biệt danh (tùy chọn)' : '昵称（可选）' }}</span>
+            <input v-model="registerForm.nickname" type="text" :placeholder="isVi ? 'Biệt danh của bạn' : '你的昵称'" />
           </label>
           <label>
-            <span>密码</span>
-            <input v-model="registerForm.password" type="password" autocomplete="new-password" placeholder="至少 8 位" required minlength="8" />
+            <span>{{ isVi ? 'Mật khẩu' : '密码' }}</span>
+            <input v-model="registerForm.password" type="password" autocomplete="new-password" :placeholder="isVi ? 'Tối thiểu 8 ký tự' : '至少 8 位'" required minlength="8" />
           </label>
           <button class="primary-button" type="submit" :disabled="registering">
-            {{ registering ? '注册中…' : '注册并加入' }}
+            {{ registering ? (isVi ? 'Đang đăng ký…' : '注册中…') : (isVi ? 'Đăng ký và tham gia' : '注册并加入') }}
           </button>
         </form>
-        <p class="invite-hint">没有账号？注册后将自动加入团队。已有账号？<RouterLink to="/login">去登录</RouterLink> 后再次打开本链接。</p>
+        <p v-if="isVi" class="invite-hint">Chưa có tài khoản? Đăng ký xong sẽ tự động tham gia nhóm. Đã có tài khoản? <RouterLink to="/login">Đăng nhập</RouterLink> rồi mở lại liên kết này.</p>
+        <p v-else class="invite-hint">没有账号？注册后将自动加入团队。已有账号？<RouterLink to="/login">去登录</RouterLink> 后再次打开本链接。</p>
       </template>
 
       <template v-else>
-        <h1>邀请无效</h1>
-        <p class="invite-subtitle">{{ errorMessage || '邀请链接不存在或已过期' }}</p>
-        <RouterLink class="primary-button link-button" to="/">返回首页</RouterLink>
+        <h1>{{ isVi ? 'Lời mời không hợp lệ' : '邀请无效' }}</h1>
+        <p class="invite-subtitle">{{ errorMessage || (isVi ? 'Liên kết lời mời không tồn tại hoặc đã hết hạn' : '邀请链接不存在或已过期') }}</p>
+        <RouterLink class="primary-button link-button" to="/">{{ isVi ? 'Về trang chủ' : '返回首页' }}</RouterLink>
       </template>
     </section>
   </main>

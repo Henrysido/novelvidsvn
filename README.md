@@ -2,10 +2,10 @@
   <img src="docs/images/logo.png" width="200" alt="NovelVids VN Logo">
 </p>
 
-<h1 align="center">NovelVids VN (Mèo Ảnh Đoản Kịch)</h1>
+<h1 align="center">NovelVids VN - Xưởng Phim Ngắn AI</h1>
 
 <p align="center">
-  <strong>「 Nền tảng sản xuất phim ngắn (Short Drama) từ tiểu thuyết bằng AI trọn gói 」</strong>
+  <strong>「 Nền tảng sản xuất phim ngắn (AI Short Drama) từ tiểu thuyết trọn gói 」</strong>
 </p>
 
 <p align="center">

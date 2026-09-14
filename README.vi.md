@@ -1,4 +1,4 @@
-# NovelVids Studio (猫影短剧) - Bản Việt Hóa
+# NovelVids Studio - Xưởng Phim Ngắn AI
 
 <p align="center">
   <strong>Nền tảng sản xuất phim ngắn / video tự động từ tiểu thuyết & kịch bản ứng dụng AI toàn diện</strong>
