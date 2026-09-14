@@ -19,6 +19,7 @@ import {
   Volume2,
   X,
 } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import { api } from '@/api'
 import { useAuthStore } from '@/features/auth/authStore'
 import AppBadge from '@/components/AppBadge.vue'
@@ -97,6 +98,8 @@ const novel = ref<Novel | null>(null)
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 const projectId = computed(() => Number(route.params.projectId))
 const activeEpisode = ref(1)
 const showingAllCharacters = ref(false)
@@ -167,11 +170,11 @@ const selectedEpisodeLoading = computed(() => {
 })
 const selectedEpisodeCharacters = computed(() => {
   const chapter = selectedEpisodeBrief.value
-  if (!chapter) return '暂无当前章节角色'
+  if (!chapter) return isVi.value ? 'Chưa có nhân vật trong tập này' : '暂无当前章节角色'
   return (chapterAssets.value[chapter.id] || [])
     .filter(asset => asset.asset_type === AssetTypeEnum.PERSON)
     .map(asset => asset.canonical_name)
-    .join('、') || '暂无当前章节角色'
+    .join('、') || (isVi.value ? 'Chưa có nhân vật trong tập này' : '暂无当前章节角色')
 })
 const canEdit = computed(() => (
   auth.enabled !== true
@@ -189,11 +192,11 @@ const analysisRunning = computed(() => {
   return status === TaskStatusEnum.PENDING || status === TaskStatusEnum.PROCESSING || status === TaskStatusEnum.QUEUED
 })
 const analysisStatus = computed(() => {
-  if (startingAnalysis.value || analysisRunning.value) return 'AI 正在理解书稿并生成封面'
-  if (analysisTask.value?.status === TaskStatusEnum.FAILED) return '分析失败'
-  if (analysisResult.value) return '剧本分析完成'
-  if (hasScriptPreview.value) return '剧本已载入'
-  return '准备分析'
+  if (startingAnalysis.value || analysisRunning.value) return isVi.value ? 'AI đang đọc kịch bản và tạo ảnh bìa' : 'AI 正在理解书稿并生成封面'
+  if (analysisTask.value?.status === TaskStatusEnum.FAILED) return isVi.value ? 'Phân tích thất bại' : '分析失败'
+  if (analysisResult.value) return isVi.value ? 'Phân tích kịch bản hoàn tất' : '剧本分析完成'
+  if (hasScriptPreview.value) return isVi.value ? 'Đã tải kịch bản' : '剧本已载入'
+  return isVi.value ? 'Sẵn sàng phân tích' : '准备分析'
 })
 const characterColors = ['#6a6cf4', '#df9854', '#4c9d89', '#ad6d9e', '#df7790', '#8d73db']
 async function loadProject(): Promise<boolean> {
@@ -209,7 +212,9 @@ async function loadProject(): Promise<boolean> {
     }
     const contentLength = response.data.content_length || 0
     if (contentLength >= 30_000 && (response.data.total_chapters || 0) <= 1) {
-      notice.error(`书稿约 ${contentLength.toLocaleString()} 字但只拆分出 ${response.data.total_chapters || 0} 章，已阻止进入。请重新上传并检查文件编码或章节标题。`)
+      notice.error(isVi.value
+        ? `Bản thảo khoảng ${contentLength.toLocaleString()} chữ nhưng chỉ tách được ${response.data.total_chapters || 0} chương, đã tạm dừng truy cập. Vui lòng kiểm tra lại định dạng tệp hoặc tiêu đề các chương.`
+        : `书稿约 ${contentLength.toLocaleString()} 字但只拆分出 ${response.data.total_chapters || 0} 章，已阻止进入。请重新上传并检查文件编码或章节标题。`)
       await router.replace('/create/short-drama')
       return false
     }
@@ -390,7 +395,7 @@ async function saveEdits() {
   if (!novel.value || !projectDraft.value || savingEdits.value) return
   const projectPatch = projectPatchFromDraft(projectDraft.value)
   if (!projectPatch.name) {
-    notice.error('小说昵称不能为空')
+    notice.error(isVi.value ? 'Tên tiểu thuyết không được để trống' : '小说昵称不能为空')
     return
   }
 
@@ -399,7 +404,7 @@ async function saveEdits() {
     return chapter ? chapterDraftChanged(draft, chapter) : false
   })
   if (changedChapterDrafts.some(draft => !draft.name.trim())) {
-    notice.error('章节标题不能为空')
+    notice.error(isVi.value ? 'Tiêu đề chương không được để trống' : '章节标题不能为空')
     return
   }
 
@@ -427,7 +432,9 @@ async function saveEdits() {
         : chapter)
     }
     cancelEditing(false)
-    notice.success(`修改已保存${changedChapterDrafts.length ? `，同步更新 ${changedChapterDrafts.length} 个章节` : ''}`)
+    notice.success(isVi.value
+      ? `Đã lưu thay đổi${changedChapterDrafts.length ? `，đồng bộ cập nhật ${changedChapterDrafts.length} chương` : ''}`
+      : `修改已保存${changedChapterDrafts.length ? `，同步更新 ${changedChapterDrafts.length} 个章节` : ''}`)
   } catch (error) {
     notice.error((error as Error).message)
   } finally {
@@ -436,7 +443,7 @@ async function saveEdits() {
 }
 
 function continueToSettings() {
-  notice.success('剧本分析已确认，正在进入角色与场景设定')
+  notice.success(isVi.value ? 'Đã xác nhận phân tích kịch bản, đang chuyển sang thiết lập nhân vật và bối cảnh' : '剧本分析已确认，正在进入角色与场景设定')
   void router.push({
     path: `/create/short-drama/manual/${projectId.value}`,
     query: selectedEpisodeBrief.value ? { chapter: String(selectedEpisodeBrief.value.id) } : undefined,
@@ -497,11 +504,11 @@ onBeforeUnmount(() => {
     >
       <section class="agent-content">
       <div class="analysis-hero">
-        <div class="project-cover-art" aria-label="项目封面">
+        <div class="project-cover-art" :aria-label="isVi ? 'Ảnh bìa dự án' : '项目封面'">
           <img
             v-if="project.cover || analysisResult?.cover"
             :src="project.coverPreview || project.cover || analysisResult?.cover"
-            :alt="`${displayedProjectName}封面`"
+            :alt="isVi ? `Ảnh bìa ${displayedProjectName}` : `${displayedProjectName}封面`"
             width="640"
             height="960"
             decoding="async"

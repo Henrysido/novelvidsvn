@@ -25,8 +25,8 @@
     "status": "Trạng thái"
   },
   "nav": {
-    "brandName": "NovelVids",
-    "brandHomeLabel": "Trang chủ NovelVids",
+    "brandName": "HenryVids",
+    "brandHomeLabel": "Trang chủ HenryVids",
     "mainNavLabel": "Điều hướng chính",
     "home": "Trang chủ",
     "creation": "Sáng tạo",
@@ -68,7 +68,7 @@
     "zhDesc": "简体中文界面"
   },
   "home": {
-    "kicker": "NovelVids AI Studio",
+    "kicker": "HenryVids AI Studio",
     "welcome": "Chào mừng trở lại",
     "desc": "Biến các tác phẩm tiểu thuyết chữ hoặc video tham chiếu thành phim ngắn sống động với quy trình AI khép kín.",
     "startCreation": "Khởi tạo dự án mới"
@@ -177,7 +177,7 @@
   },
   "login": {
     "title": "Đăng nhập hệ thống",
-    "subtitle": "Đăng nhập để tiếp tục sử dụng NovelVids Studio",
+    "subtitle": "Đăng nhập để tiếp tục sử dụng HenryVids Studio",
     "username": "Tên đăng nhập",
     "usernamePlaceholder": "Nhập tên đăng nhập của bạn",
     "password": "Mật khẩu",

@@ -84,7 +84,7 @@ onMounted(load)
       <p v-if="loading" class="dim">{{ isVi ? 'Đang tải thông tin lời mời…' : '加载邀请信息…' }}</p>
 
       <template v-else-if="invite">
-        <img class="invite-logo" src="/logo.png" :alt="isVi ? 'NovelVids' : '猫影'" />
+        <img class="invite-logo" src="/logo.png" alt="HenryVids" />
         <h1>{{ isVi ? `Tham gia「${invite.team_name}」` : `加入「${invite.team_name}」` }}</h1>
         <p class="invite-subtitle">{{ isVi ? `Bạn được mời tham gia nhóm này với vai trò: ${roleLabel(invite.role)}` : `你受邀加入该团队，角色：${roleLabel(invite.role)}` }}</p>
 

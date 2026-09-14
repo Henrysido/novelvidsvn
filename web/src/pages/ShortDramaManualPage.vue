@@ -153,20 +153,20 @@ const extractionStatusVisible = computed(() => {
 })
 const extractionStatusText = computed(() => (
   extractionSubmissionError.value
-    ? '提交失败'
+    ? (locale.value === 'vi-VN' ? 'Gửi thất bại' : '提交失败')
     : submittingExtraction.value && !extractionTask.value
-      ? '提交中'
+      ? (locale.value === 'vi-VN' ? 'Đang gửi' : '提交中')
     : statusLabel(extractionTask.value?.status)
 ))
 const extractionStatusMessage = computed(() => {
   if (extractionSubmissionError.value) return extractionSubmissionError.value
   const task = extractionTask.value
-  if (!task) return submittingExtraction.value ? '正在创建本章资产提取任务。' : ''
-  if (task.status === TaskStatusEnum.PENDING) return '任务已提交，正在等待模型执行。'
-  if (task.status === TaskStatusEnum.QUEUED) return '任务正在队列中等待处理。'
-  if (task.status === TaskStatusEnum.PROCESSING) return '正在分析本章人物、场景和道具，并与项目资产增量合并。'
-  if (task.status === TaskStatusEnum.CANCELLED) return '任务已取消，可以重新提取本章资产。'
-  return extractionErrorMessage(new Error(task.error_message || '本章资产提取失败'))
+  if (!task) return submittingExtraction.value ? (locale.value === 'vi-VN' ? 'Đang tạo tác vụ trích xuất tài sản tập này.' : '正在创建本章资产提取任务。') : ''
+  if (task.status === TaskStatusEnum.PENDING) return locale.value === 'vi-VN' ? 'Tác vụ đã gửi, đang chờ mô hình thực thi.' : '任务已提交，正在等待模型执行。'
+  if (task.status === TaskStatusEnum.QUEUED) return locale.value === 'vi-VN' ? 'Tác vụ đang xếp hàng chờ xử lý.' : '任务正在队列中等待处理。'
+  if (task.status === TaskStatusEnum.PROCESSING) return locale.value === 'vi-VN' ? 'Đang phân tích nhân vật, bối cảnh và đạo cụ tập này, và hợp nhất dần vào tài sản dự án.' : '正在分析本章人物、场景和道具，并与项目资产增量合并。'
+  if (task.status === TaskStatusEnum.CANCELLED) return locale.value === 'vi-VN' ? 'Tác vụ đã hủy, có thể trích xuất lại tài sản tập này.' : '任务已取消，可以重新提取本章资产。'
+  return extractionErrorMessage(new Error(task.error_message || (locale.value === 'vi-VN' ? 'Trích xuất tài sản tập này thất bại' : '本章资产提取失败')))
 })
 const extractionStatusClass = computed(() => ({
   'is-running': extractionTaskActive.value || submittingExtraction.value,

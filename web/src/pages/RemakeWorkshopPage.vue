@@ -119,6 +119,16 @@ function formatFileSize(bytes: number): string {
 }
 
 function folderStateLabel(entry: FolderVideoEntry): string {
+  if (isVi.value) {
+    return {
+      pending: 'Chờ tải lên',
+      uploading: `Đang tải lên ${entry.progress}%`,
+      ready: 'Đã sẵn sàng',
+      failed: 'Tải lên thất bại',
+      invalid: 'Cần xử lý',
+      ignored: 'Đã bỏ qua',
+    }[entry.state]
+  }
   return {
     pending: '待上传',
     uploading: `上传中 ${entry.progress}%`,
@@ -143,7 +153,7 @@ async function loadCapabilities() {
     capabilities.value = response.data
     setDefaults(response.data)
   } catch (error) {
-    capabilityError.value = (error as Error).message || '重制能力加载失败'
+    capabilityError.value = (error as Error).message || (isVi.value ? 'Không thể tải cấu hình năng lực Remake' : '重制能力加载失败')
   } finally {
     loadingCapabilities.value = false
   }
@@ -152,10 +162,10 @@ async function loadCapabilities() {
 function validateFile(file: File): string {
   const allowed = capabilities.value?.media.extensions ?? ['mp4', 'mov']
   const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
-  if (!allowed.includes(extension)) return '仅支持 MP4 或 MOV 格式的视频'
+  if (!allowed.includes(extension)) return isVi.value ? 'Chỉ hỗ trợ video định dạng MP4 hoặc MOV' : '仅支持 MP4 或 MOV 格式的视频'
   const maxBytes = capabilities.value?.media.max_bytes ?? 500 * 1024 * 1024
-  if (file.size > maxBytes) return '单视频不能超过 500 MB'
-  if (file.size <= 0) return '视频文件不能为空'
+  if (file.size > maxBytes) return isVi.value ? 'Mỗi video không được vượt quá 500 MB' : '单视频不能超过 500 MB'
+  if (file.size <= 0) return isVi.value ? 'Tệp video không được để trống' : '视频文件不能为空'
   return ''
 }
 

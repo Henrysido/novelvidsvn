@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { api } from '@/api'
 import AppPagination from '@/components/AppPagination.vue'
 import { notice } from '@/shared/notice'
@@ -9,6 +10,8 @@ import type { MemberItem, TeamItem, TeamRole } from '@/types'
 
 const auth = useAuthStore()
 const route = useRoute()
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 const teams = ref<TeamItem[]>([])
 const selectedTeamId = ref<number | null>(null)
@@ -55,7 +58,7 @@ async function loadMembers() {
       await loadMembers()
     }
   } catch (error) {
-    notice.error(error instanceof Error ? error.message : '加载成员失败')
+    notice.error(error instanceof Error ? error.message : (isVi.value ? 'Không thể tải danh sách thành viên' : '加载成员失败'))
   } finally {
     loading.value = false
   }
@@ -78,9 +81,9 @@ async function createInvite() {
   try {
     const response = await api.createTeamInvite(inviteRole.value, teamId.value)
     inviteLink.value = `${window.location.origin}/#/invite/${response.data.token}`
-    notice.success('邀请链接已生成（24 小时内有效）')
+    notice.success(isVi.value ? 'Đã tạo liên kết mời (hiệu lực trong 24 giờ)' : '邀请链接已生成（24 小时内有效）')
   } catch (error) {
-    notice.error(error instanceof Error ? error.message : '生成邀请链接失败')
+    notice.error(error instanceof Error ? error.message : (isVi.value ? 'Không thể tạo liên kết mời' : '生成邀请链接失败'))
   } finally {
     creatingInvite.value = false
   }
@@ -90,18 +93,18 @@ async function copyInvite() {
   if (!inviteLink.value) return
   try {
     await navigator.clipboard.writeText(inviteLink.value)
-    notice.success('链接已复制')
+    notice.success(isVi.value ? 'Đã sao chép liên kết vào bộ nhớ tạm' : '链接已复制')
   } catch {
-    notice.error('复制失败，请手动复制')
+    notice.error(isVi.value ? 'Sao chép thất bại, vui lòng sao chép thủ công' : '复制失败，请手动复制')
   }
 }
 
 async function changeRole(member: MemberItem) {
   try {
     await api.updateTeamMember(member.user_id, { role: member.role }, teamId.value)
-    notice.success('角色已更新')
+    notice.success(isVi.value ? 'Đã cập nhật vai trò' : '角色已更新')
   } catch (error) {
-    notice.error(error instanceof Error ? error.message : '更新角色失败')
+    notice.error(error instanceof Error ? error.message : (isVi.value ? 'Cập nhật vai trò thất bại' : '更新角色失败'))
     await loadMembers()
   }
 }
@@ -109,49 +112,55 @@ async function changeRole(member: MemberItem) {
 async function toggleStatus(member: MemberItem) {
   try {
     await api.updateTeamMember(member.user_id, { status: member.status === 1 ? 0 : 1 }, teamId.value)
-    notice.success(member.status === 1 ? '成员已禁用' : '成员已启用')
+    notice.success(member.status === 1 ? (isVi.value ? 'Đã vô hiệu hóa thành viên' : '成员已禁用') : (isVi.value ? 'Đã kích hoạt thành viên' : '成员已启用'))
     await loadMembers()
   } catch (error) {
-    notice.error(error instanceof Error ? error.message : '操作失败')
+    notice.error(error instanceof Error ? error.message : (isVi.value ? 'Thao tác thất bại' : '操作失败'))
   }
 }
 
 async function setLimit(member: MemberItem) {
-  const raw = window.prompt(
-    `为「${member.nickname || member.username}」设置累计消费限额（元），留空或 0 表示不限：`,
-    member.cost_limit === null || member.cost_limit === undefined ? '' : String(member.cost_limit),
-  )
+  const promptMsg = isVi.value
+    ? `Đặt hạn mức chi tiêu lũy kế cho「${member.nickname || member.username}」(¥), để trống hoặc 0 là không giới hạn:`
+    : `为「${member.nickname || member.username}」设置累计消费限额（元），留空或 0 表示不限：`
+  const raw = window.prompt(promptMsg, member.cost_limit === null || member.cost_limit === undefined ? '' : String(member.cost_limit))
   if (raw === null) return
   const value = raw.trim() === '' ? null : Number(raw)
   if (value !== null && (Number.isNaN(value) || value < 0)) return
   try {
     await api.setTeamMemberLimit(member.user_id, value === 0 ? null : value, teamId.value)
-    notice.success('限额已更新')
+    notice.success(isVi.value ? 'Đã cập nhật hạn mức chi tiêu' : '限额已更新')
     await loadMembers()
   } catch (error) {
-    notice.error(error instanceof Error ? error.message : '设置限额失败')
+    notice.error(error instanceof Error ? error.message : (isVi.value ? 'Cài đặt hạn mức thất bại' : '设置限额失败'))
   }
 }
 
 async function removeMember(member: MemberItem) {
-  if (!window.confirm(`确认将「${member.nickname || member.username}」移出团队？`)) return
+  const confirmMsg = isVi.value
+    ? `Xác nhận xóa「${member.nickname || member.username}」khỏi đội nhóm?`
+    : `确认将「${member.nickname || member.username}」移出团队？`
+  if (!window.confirm(confirmMsg)) return
   try {
     await api.removeTeamMember(member.user_id, teamId.value)
-    notice.success('成员已移除')
+    notice.success(isVi.value ? 'Đã xóa thành viên khỏi nhóm' : '成员已移除')
     await loadMembers()
   } catch (error) {
-    notice.error(error instanceof Error ? error.message : '移除成员失败')
+    notice.error(error instanceof Error ? error.message : (isVi.value ? 'Xóa thành viên thất bại' : '移除成员失败'))
   }
 }
 
 async function resetPassword(member: MemberItem) {
-  const newPassword = window.prompt(`为「${member.nickname || member.username}」设置新密码（至少 8 位）：`)
+  const pwdPrompt = isVi.value
+    ? `Đặt mật khẩu mới cho「${member.nickname || member.username}」(tối thiểu 8 ký tự):`
+    : `为「${member.nickname || member.username}」设置新密码（至少 8 位）：`
+  const newPassword = window.prompt(pwdPrompt)
   if (!newPassword || newPassword.length < 8) return
   try {
     await api.resetTeamMemberPassword(member.user_id, { new_password: newPassword }, teamId.value)
-    notice.success('密码已重置')
+    notice.success(isVi.value ? 'Mật khẩu đã được đặt lại thành công' : '密码已重置')
   } catch (error) {
-    notice.error(error instanceof Error ? error.message : '重置密码失败')
+    notice.error(error instanceof Error ? error.message : (isVi.value ? 'Đặt lại mật khẩu thất bại' : '重置密码失败'))
   }
 }
 
@@ -164,9 +173,9 @@ onMounted(async () => {
 <template>
   <main class="members-page">
     <header class="page-header">
-      <h1>成员管理</h1>
+      <h1>{{ isVi ? 'Quản lý thành viên' : '成员管理' }}</h1>
       <label v-if="auth.role === 'super'" class="team-picker">
-        <span>团队</span>
+        <span>{{ isVi ? 'Đội nhóm' : '团队' }}</span>
         <select v-model="selectedTeamId" @change="page = 1; loadMembers()">
           <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
         </select>
@@ -174,61 +183,70 @@ onMounted(async () => {
     </header>
 
     <section class="panel">
-      <h2>邀请成员</h2>
-      <p class="dim">成员加入团队的唯一方式是通过邀请链接（24 小时有效）。新用户经链接注册加入，老用户登录后经链接加入。</p>
+      <h2>{{ isVi ? 'Mời thành viên mới' : '邀请成员' }}</h2>
+      <p class="dim">
+        {{ isVi ? 'Cách duy nhất để thành viên gia nhập là qua liên kết mời (hiệu lực trong 24 giờ). Người dùng mới sẽ đăng ký qua liên kết, thành viên cũ đăng nhập rồi tham gia.' : '成员加入团队的唯一方式是通过邀请链接（24 小时有效）。新用户经链接注册加入，老用户登录后经链接加入。' }}
+      </p>
       <div class="invite-row">
         <select v-model="inviteRole">
-          <option value="creator">创作者</option>
-          <option value="viewer">查看者</option>
-          <option value="admin">团队管理员</option>
+          <option value="creator">{{ isVi ? 'Người sáng tạo (Creator)' : '创作者' }}</option>
+          <option value="viewer">{{ isVi ? 'Người xem (Viewer)' : '查看者' }}</option>
+          <option value="admin">{{ isVi ? 'Quản trị viên nhóm (Admin)' : '团队管理员' }}</option>
         </select>
         <button type="button" class="primary-button" :disabled="creatingInvite" @click="createInvite">
-          {{ creatingInvite ? '生成中…' : '生成邀请链接' }}
+          {{ creatingInvite ? (isVi ? 'Đang tạo…' : '生成中…') : (isVi ? 'Tạo liên kết mời' : '生成邀请链接') }}
         </button>
       </div>
       <div v-if="inviteLink" class="invite-link-row">
         <input :value="inviteLink" type="text" readonly />
-        <button type="button" class="ghost-button" @click="copyInvite">复制</button>
+        <button type="button" class="ghost-button" @click="copyInvite">{{ isVi ? 'Sao chép' : '复制' }}</button>
       </div>
     </section>
 
     <section class="panel">
-      <h2>成员列表（{{ totalMembers }}）</h2>
-      <p v-if="loading" class="dim">加载中…</p>
+      <h2>{{ isVi ? `Danh sách thành viên (${totalMembers})` : `成员列表（${totalMembers}）` }}</h2>
+      <p v-if="loading" class="dim">{{ isVi ? 'Đang tải dữ liệu…' : '加载中…' }}</p>
       <table v-else class="member-table">
         <thead>
           <tr>
-            <th>用户名</th><th>昵称</th><th>角色</th><th>状态</th>
-            <th>历史消耗（元）</th><th>消费限额（元）</th><th class="actions">操作</th>
+            <th>{{ isVi ? 'Tên đăng nhập' : '用户名' }}</th>
+            <th>{{ isVi ? 'Biệt danh' : '昵称' }}</th>
+            <th>{{ isVi ? 'Vai trò' : '角色' }}</th>
+            <th>{{ isVi ? 'Trạng thái' : '状态' }}</th>
+            <th>{{ isVi ? 'Chi tiêu lũy kế (¥)' : '历史消耗（元）' }}</th>
+            <th>{{ isVi ? 'Hạn mức chi tiêu (¥)' : '消费限额（元）' }}</th>
+            <th class="actions">{{ isVi ? 'Thao tác' : '操作' }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="member in members" :key="member.user_id" :class="{ 'is-disabled': member.status !== 1 }">
-            <td>{{ member.username }}<span v-if="isSelf(member)" class="self-mark">本人</span></td>
+            <td>{{ member.username }}<span v-if="isSelf(member)" class="self-mark">{{ isVi ? 'Chính bạn' : '本人' }}</span></td>
             <td>{{ member.nickname || '—' }}</td>
             <td>
               <select :value="member.role" :disabled="isSelf(member)" @change="member.role = ($event.target as HTMLSelectElement).value as TeamRole; changeRole(member)">
-                <option value="admin">团队管理员</option>
-                <option value="creator">创作者</option>
-                <option value="viewer">查看者</option>
+                <option value="admin">{{ isVi ? 'Quản trị viên nhóm' : '团队管理员' }}</option>
+                <option value="creator">{{ isVi ? 'Người sáng tạo' : '创作者' }}</option>
+                <option value="viewer">{{ isVi ? 'Người xem' : '查看者' }}</option>
               </select>
             </td>
             <td>
               <span class="status-badge" :class="member.status === 1 ? 'is-active' : 'is-stopped'">
-                {{ member.status === 1 ? '正常' : '已禁用' }}
+                {{ member.status === 1 ? (isVi ? 'Hoạt động' : '正常') : (isVi ? 'Đã khóa' : '已禁用') }}
               </span>
             </td>
             <td class="cost">{{ money(member.total_cost) }}</td>
-            <td>{{ member.cost_limit === null || member.cost_limit === undefined ? '不限' : money(member.cost_limit) }}</td>
+            <td>{{ member.cost_limit === null || member.cost_limit === undefined ? (isVi ? 'Không giới hạn' : '不限') : money(member.cost_limit) }}</td>
             <td class="actions">
               <template v-if="isSelf(member)">
-                <span class="dim">不可操作本人</span>
+                <span class="dim">{{ isVi ? 'Không thể thao tác trên tài khoản của bạn' : '不可操作本人' }}</span>
               </template>
               <template v-else>
-                <button type="button" class="ghost-button" @click="toggleStatus(member)">{{ member.status === 1 ? '禁用' : '启用' }}</button>
-                <button type="button" class="ghost-button" @click="setLimit(member)">限额</button>
-                <button type="button" class="ghost-button" @click="resetPassword(member)">重置密码</button>
-                <button type="button" class="danger-button" @click="removeMember(member)">移除</button>
+                <button type="button" class="ghost-button" @click="toggleStatus(member)">
+                  {{ member.status === 1 ? (isVi ? 'Khóa' : '禁用') : (isVi ? 'Kích hoạt' : '启用') }}
+                </button>
+                <button type="button" class="ghost-button" @click="setLimit(member)">{{ isVi ? 'Hạn mức' : '限额' }}</button>
+                <button type="button" class="ghost-button" @click="resetPassword(member)">{{ isVi ? 'Đặt lại MK' : '重置密码' }}</button>
+                <button type="button" class="danger-button" @click="removeMember(member)">{{ isVi ? 'Xóa' : '移除' }}</button>
               </template>
             </td>
           </tr>

@@ -235,7 +235,7 @@ async function saveGeneralConfig() {
     const response = await api.updateGeneralConfig({ prompt_language: promptLanguage.value })
     generalConfig.value = response.data
     promptLanguage.value = response.data.prompt_language
-    notice.success('通用配置已保存，新提交的生成任务将使用该语言')
+    notice.success(isVi.value ? 'Cấu hình chung đã được lưu, các tác vụ tạo mới sẽ sử dụng ngôn ngữ này' : '通用配置已保存，新提交的生成任务将使用该语言')
   } catch (error) {
     notice.error((error as Error).message)
   } finally {
@@ -319,7 +319,7 @@ function changeVideoModelType() {
 
 async function saveConfig() {
   if (!form.value.task_types.length) {
-    notice.error('请至少选择一个能力用途')
+    notice.error(isVi.value ? 'Vui lòng chọn ít nhất một mục đích năng lực' : '请至少选择一个能力用途')
     return
   }
   creating.value = true
@@ -388,7 +388,7 @@ async function saveConfig() {
     }
     showCreate.value = false
     await load()
-    notice.success(isEditing.value ? '模型配置已更新' : '模型配置已创建')
+    notice.success(isEditing.value ? (isVi.value ? 'Cấu hình mô hình đã được cập nhật' : '模型配置已更新') : (isVi.value ? 'Cấu hình mô hình đã được tạo' : '模型配置已创建'))
   } catch (error) {
     notice.error((error as Error).message)
   } finally {
@@ -400,7 +400,7 @@ async function activate(item: AiModelConfig) {
   try {
     await api.activateConfig(item.id)
     await load()
-    notice.success(`已启用 ${item.name}`)
+    notice.success(isVi.value ? `Đã kích hoạt ${item.name}` : `已启用 ${item.name}`)
   } catch (error) {
     notice.error((error as Error).message)
   }
@@ -410,7 +410,7 @@ async function deactivate(item: AiModelConfig) {
   try {
     await api.deactivateConfig(item.id)
     await load()
-    notice.success(`已停用 ${item.name}`)
+    notice.success(isVi.value ? `Đã vô hiệu hóa ${item.name}` : `已停用 ${item.name}`)
   } catch (error) {
     notice.error((error as Error).message)
   }
@@ -418,15 +418,15 @@ async function deactivate(item: AiModelConfig) {
 
 async function remove(item: AiModelConfig) {
   if (!await appConfirm({
-    title: `删除模型配置「${item.name}」？`,
-    message: '删除后该模型将无法继续用于新的生成任务。',
-    confirmLabel: '删除配置',
+    title: isVi.value ? `Xóa cấu hình mô hình「${item.name}」?` : `删除模型配置「${item.name}」？`,
+    message: isVi.value ? 'Sau khi xóa, mô hình này sẽ không thể dùng cho các tác vụ sinh mới.' : '删除后该模型将无法继续用于新的生成任务。',
+    confirmLabel: isVi.value ? 'Xóa cấu hình' : '删除配置',
     tone: 'danger',
   })) return
   try {
     await api.deleteConfig(item.id)
     await load()
-    notice.success('模型配置已删除')
+    notice.success(isVi.value ? 'Cấu hình mô hình đã được xóa' : '模型配置已删除')
   } catch (error) {
     notice.error((error as Error).message)
   }

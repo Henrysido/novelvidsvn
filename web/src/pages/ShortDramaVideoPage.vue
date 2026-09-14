@@ -165,7 +165,7 @@ async function loadChapter(chapterId: number) {
     clipCurrentTime.value = 0
   } catch (error) {
     if (version !== loadVersion) return
-    loadError.value = error instanceof Error ? error.message : '视频工作区加载失败'
+    loadError.value = error instanceof Error ? error.message : (locale.value === 'vi-VN' ? 'Tải không gian video thất bại' : '视频工作区加载失败')
   } finally {
     if (version === loadVersion) loading.value = false
   }
@@ -184,7 +184,7 @@ async function load() {
       ...projectResponse.data,
       aspectRatio: settings.aspectRatio || '9:16',
       resolution: settings.resolution || '720p',
-      style: settings.style || '写实通用',
+      style: settings.style || (locale.value === 'vi-VN' ? 'Chân thực điện ảnh' : '写实通用'),
       creationMode: settings.mode || 'agent',
     }
     chapters.value = chaptersResponse.data.items
@@ -199,7 +199,7 @@ async function load() {
     }
     await loadChapter(chapter.id)
   } catch (error) {
-    loadError.value = error instanceof Error ? error.message : '视频工作区加载失败'
+    loadError.value = error instanceof Error ? error.message : (locale.value === 'vi-VN' ? 'Tải không gian video thất bại' : '视频工作区加载失败')
     loading.value = false
   }
 }
@@ -338,12 +338,14 @@ function toggleFullscreen() {
 }
 
 function chapterDownloadFilename() {
-  const projectName = project.value?.name || '短剧'
+  const isVi = locale.value === 'vi-VN'
+  const projectName = project.value?.name || (isVi ? 'Phim_ngan' : '短剧')
   const chapterTitle = stripChapterOrdinal(activeChapter.value?.name)
   const chapterName = activeChapter.value
-    ? `第${activeChapter.value.number}集${chapterTitle ? `-${chapterTitle}` : ''}`
-    : '当前集'
-  const safeTitle = `${projectName}-${chapterName}-完整视频`.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ')
+    ? (isVi ? `Tap_${activeChapter.value.number}${chapterTitle ? `-${chapterTitle}` : ''}` : `第${activeChapter.value.number}集${chapterTitle ? `-${chapterTitle}` : ''}`)
+    : (isVi ? 'Tap_hien_tai' : '当前集')
+  const suffix = isVi ? 'video-hoan-chinh' : '完整视频'
+  const safeTitle = `${projectName}-${chapterName}-${suffix}`.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ')
   return `${safeTitle}.mp4`
 }
 
@@ -354,9 +356,9 @@ async function downloadCurrentChapterVideo() {
   try {
     const result = (await api.mergeChapterVideos(chapterId)).data
     await downloadFile(mediaUrl(result.merged_url), chapterDownloadFilename())
-    notice.success(`已按顺序合成并下载 ${result.video_count} 个分镜视频`)
+    notice.success(locale.value === 'vi-VN' ? `Đã ghép và tải xuống ${result.video_count} video phân cảnh theo thứ tự` : `已按顺序合成并下载 ${result.video_count} 个分镜视频`)
   } catch (error) {
-    notice.error(error instanceof Error ? error.message : '完整视频合成下载失败')
+    notice.error(error instanceof Error ? error.message : (locale.value === 'vi-VN' ? 'Ghép và tải video hoàn chỉnh thất bại' : '完整视频合成下载失败'))
   } finally {
     downloadingChapter.value = false
   }

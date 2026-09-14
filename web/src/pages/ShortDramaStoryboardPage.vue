@@ -103,7 +103,7 @@ const terminalTaskStatuses = new Set([
 
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const projectId = computed(() => Number(route.params.projectId))
 const project = ref<ProjectView | null>(null)
 const chapters = ref<Chapter[]>([])
@@ -194,7 +194,7 @@ async function waitForAnalysisThenGenerate(chapterId: number) {
       const gate = analysisGate(task?.status)
       if (gate === 'generate') break
       if (gate === 'failed') {
-        throw new Error(task?.error_message || '项目分析失败，请回到剧本页重新分析')
+        throw new Error(task?.error_message || (locale.value === 'vi-VN' ? 'Phân tích dự án thất bại, vui lòng quay lại trang kịch bản để phân tích lại' : '项目分析失败，请回到剧本页重新分析'))
       }
       await sleep(3000)
     }
@@ -271,7 +271,7 @@ async function persistVideoModelPreference(modelId: number) {
       const persisted = videoModels.value.find(item => item.config_id === persistedVideoModelId.value)
       selectedVideoModel.value = String(persisted?.config_id || videoModels.value[0]?.config_id || '')
     }
-    notice.error(error instanceof Error ? error.message : '视频模型偏好保存失败')
+    notice.error(error instanceof Error ? error.message : (locale.value === 'vi-VN' ? 'Lưu cấu hình mô hình video thất bại' : '视频模型偏好保存失败'))
   }
 }
 
@@ -381,7 +381,7 @@ function sceneVideoError(scene: Scene) {
     const value = metadata[key]
     if (typeof value === 'string' && value.trim()) return value.trim()
   }
-  return video.status === TaskStatusEnum.CANCELLED ? '视频生成任务已取消' : '视频生成失败，请检查生成参数后重试'
+  return video.status === TaskStatusEnum.CANCELLED ? (locale.value === 'vi-VN' ? 'Tác vụ tạo video đã bị hủy' : '视频生成任务已取消') : (locale.value === 'vi-VN' ? 'Tạo video thất bại, vui lòng kiểm tra tham số và thử lại' : '视频生成失败，请检查生成参数后重试')
 }
 
 function canGenerateSceneVideo(scene: Scene) {
@@ -512,15 +512,15 @@ function saveEditedAsset(asset: Asset) {
 
 async function removeAssetFromScene(scene: Scene, asset: Asset) {
   const confirmed = await appConfirm({
-    title: `移除「${asset.canonical_name}」？`,
-    message: '只会从当前分镜移除，不会删除项目资产及其衍生状态。',
-    confirmLabel: '确认移除',
+    title: t('storyboard.confirmRemoveAssetTitle', { name: asset.canonical_name }),
+    message: t('storyboard.confirmRemoveAssetMessage'),
+    confirmLabel: t('storyboard.confirmRemoveAssetButton'),
     tone: 'danger',
   })
   if (!confirmed) return
   updateAssetSelection(scene, { assetId: asset.id, variantId: null, selected: false })
   openAssetActionKey.value = ''
-  notice.success(`已从当前分镜移除「${asset.canonical_name}」`)
+  notice.success(t('storyboard.assetRemovedToast', { name: asset.canonical_name }))
 }
 
 function editingAssetKind(asset: Asset | null): 'character' | 'scene' | 'prop' {
@@ -755,7 +755,7 @@ async function selectAssetVoiceReference(reference: AudioReference) {
   if (!target || savingAssetVoiceKey.value) return
   const asset = assets.value.find(item => item.id === target.assetId)
   if (!asset) {
-    notice.error('角色资产不存在，请刷新后重试')
+    notice.error(locale.value === 'vi-VN' ? 'Tài nguyên nhân vật không tồn tại, vui lòng làm mới rồi thử lại' : '角色资产不存在，请刷新后重试')
     assetVoicePickerTarget.value = null
     return
   }
@@ -766,7 +766,7 @@ async function selectAssetVoiceReference(reference: AudioReference) {
     cacheAudioReference(reference)
     if (target.variantId) {
       const variant = asset.variants?.find(item => item.id === target.variantId)
-      if (!variant) throw new Error('当前衍生形态不存在，请重新选择')
+      if (!variant) throw new Error(locale.value === 'vi-VN' ? 'Hình thái phái sinh hiện tại không tồn tại, vui lòng chọn lại' : '当前衍生形态不存在，请重新选择')
       const metadata = metadataRecord(variant.metadata)
       const editorForm = metadataRecord(metadata.editor_form)
       const updated = (await api.updateAssetVariant(asset.id, variant.id, {
@@ -797,9 +797,9 @@ async function selectAssetVoiceReference(reference: AudioReference) {
       })
     }
     assetVoicePickerTarget.value = null
-    notice.success(`已为“${asset.canonical_name}”设置音色`)
+    notice.success(t('storyboard.voiceSetToast', { name: asset.canonical_name }))
   } catch (error) {
-    notice.error(`音色保存失败：${error instanceof Error ? error.message : '未知错误'}`)
+    notice.error(locale.value === 'vi-VN' ? `Lưu giọng đọc thất bại: ${error instanceof Error ? error.message : 'Lỗi không xác định'}` : `音色保存失败：${error instanceof Error ? error.message : '未知错误'}`)
   } finally {
     savingAssetVoiceKey.value = ''
   }

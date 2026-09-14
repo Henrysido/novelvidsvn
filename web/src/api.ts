@@ -418,4 +418,10 @@ export const api = {
 }
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-export const statusLabel = (status?: number) => ({ 1: '等待中', 2: '处理中', 3: '已完成', 4: '失败', 5: '已取消', 6: '排队中' }[status || 0] || '未知')
+export const statusLabel = (status?: number) => {
+  const isZh = typeof localStorage !== 'undefined' && localStorage.getItem('novelvids_locale') === 'zh-CN'
+  if (isZh) {
+    return ({ 1: '等待中', 2: '处理中', 3: '已完成', 4: '失败', 5: '已取消', 6: '排队中' }[status || 0] || '未知')
+  }
+  return ({ 1: 'Đang chờ', 2: 'Đang xử lý', 3: 'Hoàn thành', 4: 'Thất bại', 5: 'Đã hủy', 6: 'Đang xếp hàng' }[status || 0] || 'Không xác định')
+}

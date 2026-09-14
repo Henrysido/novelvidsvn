@@ -25,8 +25,8 @@
     "status": "状态"
   },
   "nav": {
-    "brandName": "猫影",
-    "brandHomeLabel": "猫影首页",
+    "brandName": "HenryVids",
+    "brandHomeLabel": "HenryVids 首页",
     "mainNavLabel": "主导航",
     "home": "首页",
     "creation": "创作",
@@ -68,7 +68,7 @@
     "zhDesc": "简体中文界面"
   },
   "home": {
-    "kicker": "猫影短剧",
+    "kicker": "HenryVids AI Studio",
     "welcome": "欢迎回来",
     "desc": "从一个项目开始，把小说内容逐步制作成短剧。",
     "startCreation": "开始创作"
@@ -177,7 +177,7 @@
   },
   "login": {
     "title": "登录",
-    "subtitle": "登录后继续使用猫影短剧",
+    "subtitle": "登录后继续使用 HenryVids Studio",
     "username": "用户名",
     "usernamePlaceholder": "请输入用户名",
     "password": "密码",

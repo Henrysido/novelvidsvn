@@ -78,7 +78,7 @@ function handleTeamSwitch(event: Event) {
         <img src="/logo.png" alt="" />
         <span>
           <strong>{{ $t('nav.brandName') }}</strong>
-          <small>NOVEL STUDIO</small>
+          <small>AI CINEMA STUDIO</small>
         </span>
       </RouterLink>
       <label

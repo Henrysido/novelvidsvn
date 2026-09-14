@@ -62,27 +62,32 @@ async function submit() {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background:
-    radial-gradient(1200px 600px at 20% -10%, var(--app-accent-soft, rgba(91, 92, 246, 0.14)), transparent 60%),
-    var(--app-canvas, #f8f9fc);
+  background-color: var(--app-canvas, #090812);
+  background-image:
+    radial-gradient(ellipse at center, rgba(168, 85, 247, 0.16), transparent 60%),
+    var(--creation-bg-image, none);
+  background-position: center;
+  background-size: cover;
 }
 .login-card {
   width: 100%;
   max-width: 380px;
-  background: var(--app-surface, #fff);
-  border: 1px solid var(--app-border, #e3e5ec);
-  border-radius: 16px;
+  background: var(--app-surface-raised, #131022);
+  border: 1px solid var(--app-border, #2c254c);
+  border-radius: 20px;
   padding: 32px 28px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(168, 85, 247, 0.15);
+  backdrop-filter: blur(16px);
 }
 .login-logo {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
   align-self: center;
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.35);
 }
 .login-card h1 {
   margin: 0;
@@ -114,8 +119,8 @@ async function submit() {
   outline: none;
 }
 .login-field input:focus {
-  border-color: var(--app-accent, #5b5cf6);
-  box-shadow: 0 0 0 3px var(--app-accent-soft, rgba(91, 92, 246, 0.14));
+  border-color: var(--app-accent, #a855f7);
+  box-shadow: 0 0 0 3px var(--app-accent-soft, rgba(168, 85, 247, 0.16));
 }
 .login-error {
   margin: 0;
@@ -127,11 +132,17 @@ async function submit() {
   height: 42px;
   border: none;
   border-radius: 10px;
-  background: var(--app-accent, #5b5cf6);
+  background: linear-gradient(135deg, #9333ea, #7c3aed);
   color: #fff;
   font-size: 15px;
   font-weight: 600;
+  box-shadow: 0 8px 22px rgba(124, 58, 237, 0.35);
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.login-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.45);
 }
 .login-submit:disabled {
   opacity: 0.6;

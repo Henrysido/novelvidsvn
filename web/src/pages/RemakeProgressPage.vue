@@ -115,12 +115,12 @@ function startStream() {
         connectionState.value = attempt ? 'reconnecting' : 'connecting'
         await api.streamRemakeProjectProgress(projectId.value, applySnapshot, controller.signal)
         if (snapshot.value?.terminal || controller.signal.aborted) return
-        throw new Error('进度连接已断开')
+        throw new Error(isVi.value ? 'Kết nối tiến độ đã ngắt' : '进度连接已断开')
       } catch (error) {
         if (controller.signal.aborted || !pageAlive || generation !== streamGeneration) return
         attempt += 1
         connectionState.value = 'reconnecting'
-        errorMessage.value = error instanceof Error ? error.message : '拆解进度连接中断'
+        errorMessage.value = error instanceof Error ? error.message : (isVi.value ? 'Kết nối bóc tách bị ngắt' : '拆解进度连接中断')
         await waitForReconnect(Math.min(5000, 1000 * attempt))
       }
     }
@@ -129,7 +129,7 @@ function startStream() {
 
 async function loadProgress() {
   if (!Number.isFinite(projectId.value) || projectId.value <= 0) {
-    errorMessage.value = '重制项目编号无效'
+    errorMessage.value = isVi.value ? 'Mã dự án làm lại không hợp lệ' : '重制项目编号无效'
     loading.value = false
     return
   }
@@ -138,7 +138,7 @@ async function loadProgress() {
     applySnapshot((await api.remakeProjectProgress(projectId.value)).data)
     if (!snapshot.value?.terminal) startStream()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '无法读取拆解进度'
+    errorMessage.value = error instanceof Error ? error.message : (isVi.value ? 'Không thể đọc tiến độ bóc tách' : '无法读取拆解进度')
   } finally {
     loading.value = false
   }
@@ -154,7 +154,7 @@ async function retrySource(source: RemakeProgressSource) {
     applySnapshot((await api.remakeProjectProgress(projectId.value)).data)
     startStream()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '重试失败'
+    errorMessage.value = error instanceof Error ? error.message : (isVi.value ? 'Thử lại thất bại' : '重试失败')
   } finally {
     const remaining = new Set(retryingSourceIds.value)
     remaining.delete(source.source_id)
@@ -173,25 +173,25 @@ onBeforeUnmount(() => {
 <template>
   <main class="remake-progress-page">
     <header class="progress-header">
-      <AppButton type="button" variant="ghost" size="sm" icon-only aria-label="返回项目列表" @click="router.push('/projects')"><ArrowLeft :size="18" /></AppButton>
+      <AppButton type="button" variant="ghost" size="sm" icon-only :aria-label="isVi ? 'Quay lại danh sách dự án' : '返回项目列表'" @click="router.push('/projects')"><ArrowLeft :size="18" /></AppButton>
       <div>
         <small>AI REMAKE WORKSHOP</small>
-        <strong>{{ snapshot?.name || '重制拆解' }}</strong>
+        <strong>{{ snapshot?.name || (isVi ? 'Bóc tách video' : '重制拆解') }}</strong>
       </div>
-      <span class="background-badge"><span />后台持续运行</span>
+      <span class="background-badge"><span />{{ isVi ? 'Đang chạy ngầm liên tục' : '后台持续运行' }}</span>
     </header>
 
     <section v-if="loading" class="progress-loading" role="status" aria-live="polite">
       <LoaderCircle :size="30" />
-      <strong>正在连接拆解任务…</strong>
-      <p>正在读取后台保存的最新进度。</p>
+      <strong>{{ isVi ? 'Đang kết nối tác vụ bóc tách…' : '正在连接拆解任务…' }}</strong>
+      <p>{{ isVi ? 'Đang đọc tiến độ mới nhất được lưu trên hệ thống.' : '正在读取后台保存的最新进度。' }}</p>
     </section>
 
     <section v-else-if="!snapshot" class="progress-loading is-error" role="alert">
       <AlertTriangle :size="30" />
-      <strong>暂时无法读取拆解进度</strong>
+      <strong>{{ isVi ? 'Tạm thời không thể tải tiến độ bóc tách' : '暂时无法读取拆解进度' }}</strong>
       <p>{{ errorMessage }}</p>
-      <AppButton type="button" variant="primary" size="sm" @click="loadProgress"><RefreshCw :size="15" />重新连接</AppButton>
+      <AppButton type="button" variant="primary" size="sm" @click="loadProgress"><RefreshCw :size="15" />{{ isVi ? 'Kết nối lại' : '重新连接' }}</AppButton>
     </section>
 
     <div v-else class="progress-content">
@@ -202,21 +202,21 @@ onBeforeUnmount(() => {
           <Sparkles v-else :size="28" />
         </div>
         <div class="hero-copy">
-          <small>{{ connectionState === 'reconnecting' ? '正在重新连接实时进度' : 'AI VIDEO DECOMPOSITION' }}</small>
+          <small>{{ connectionState === 'reconnecting' ? (isVi ? 'Đang kết nối lại tiến độ thời gian thực' : '正在重新连接实时进度') : 'AI VIDEO DECOMPOSITION' }}</small>
           <h1>{{ statusTitle }}</h1>
           <p>{{ statusDescription }}</p>
         </div>
-        <div class="overall-progress" :aria-label="`总体进度 ${snapshot.overall_progress}%`">
+        <div class="overall-progress" :aria-label="isVi ? `Tổng tiến độ ${snapshot.overall_progress}%` : `总体进度 ${snapshot.overall_progress}%`">
           <strong>{{ snapshot.overall_progress }}<small>%</small></strong>
-          <span>总体进度</span>
+          <span>{{ isVi ? 'Tổng tiến độ' : '总体进度' }}</span>
         </div>
         <div class="progress-track" aria-hidden="true"><span :style="{ width: `${snapshot.overall_progress}%` }" /></div>
-        <p v-if="connectionState === 'reconnecting'" class="connection-message"><RefreshCw :size="13" />实时连接中断，正在自动重连；后台任务不受影响。</p>
+        <p v-if="connectionState === 'reconnecting'" class="connection-message"><RefreshCw :size="13" />{{ isVi ? 'Mất kết nối thời gian thực, đang tự động kết nối lại; tác vụ nền không bị ảnh hưởng.' : '实时连接中断，正在自动重连；后台任务不受影响。' }}</p>
       </section>
 
       <section class="progress-grid">
         <article class="pipeline-card">
-          <header><div><small>PROCESS</small><h2>拆解过程</h2></div><span>{{ snapshot.source_summary.completed }}/{{ snapshot.source_summary.total }} 集完成</span></header>
+          <header><div><small>PROCESS</small><h2>{{ isVi ? 'Quy trình bóc tách' : '拆解过程' }}</h2></div><span>{{ snapshot.source_summary.completed }}/{{ snapshot.source_summary.total }} {{ isVi ? 'tập hoàn tất' : '集完成' }}</span></header>
           <ol class="pipeline-list">
             <li v-for="stage in stages" :key="stage.key" :class="`is-${stageState(stage.key, stage.threshold)}`">
               <span class="stage-marker">
