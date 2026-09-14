@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Focus, X } from 'lucide-vue-next'
 import AppButton from './AppButton.vue'
 import ScenePromptEditor, { type ScenePromptMentionOption } from './ScenePromptEditor.vue'
+
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 const props = withDefaults(defineProps<{
   open: boolean
@@ -152,10 +156,10 @@ onBeforeUnmount(() => {
             <span class="scene-prompt-focus__icon"><Focus :size="19" /></span>
             <div>
               <span>FOCUS MODE</span>
-              <h2 id="scene-prompt-focus-title">分镜 {{ sceneSequence }} · 专注编辑</h2>
+              <h2 id="scene-prompt-focus-title">{{ isVi ? `Phân cảnh ${sceneSequence} · Chế độ tập trung` : `分镜 ${sceneSequence} · 专注编辑` }}</h2>
             </div>
             <kbd>Esc</kbd>
-            <AppButton type="button" variant="ghost" size="sm" icon-only aria-label="退出专注编辑" title="退出专注编辑" @click="close"><X :size="18" /></AppButton>
+            <AppButton type="button" variant="ghost" size="sm" icon-only :aria-label="isVi ? 'Thoát chế độ tập trung' : '退出专注编辑'" :title="isVi ? 'Thoát chế độ tập trung' : '退出专注编辑'" @click="close"><X :size="18" /></AppButton>
           </header>
 
           <main class="scene-prompt-focus__body">
@@ -169,8 +173,8 @@ onBeforeUnmount(() => {
           </main>
 
           <footer class="scene-prompt-focus__footer">
-            <span>输入 <kbd>@</kbd> 可继续引用角色、场景、道具与素材</span>
-            <span>{{ modelValue.length.toLocaleString() }} 字符 · 修改自动保存</span>
+            <span>{{ isVi ? 'Nhập @ để tiếp tục trích dẫn nhân vật, bối cảnh, đạo cụ và tư liệu' : '输入 @ 可继续引用角色、场景、道具与素材' }}</span>
+            <span>{{ modelValue.length.toLocaleString() }} {{ isVi ? 'ký tự · Tự động lưu thay đổi' : '字符 · 修改自动保存' }}</span>
           </footer>
         </section>
       </div>

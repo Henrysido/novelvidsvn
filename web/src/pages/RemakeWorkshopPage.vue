@@ -20,7 +20,11 @@ import AppSelect from '@/components/AppSelect.vue'
 import CreationConfigBar from '@/components/CreationConfigBar.vue'
 import CreationEntryShell from '@/components/CreationEntryShell.vue'
 import { prepareFolderBatch, type FolderVideoEntry } from '@/features/remake/folderEpisodes'
+import { useI18n } from 'vue-i18n'
 import type { RemakeCapabilities, RemakeHistoryEpisode, RemakeHistoryProject, RemakeUpload } from '@/types'
+
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 type UploadState = 'empty' | 'uploading' | 'ready' | 'failed'
 type SourceMode = 'single_upload' | 'folder_upload' | 'history'
@@ -55,7 +59,7 @@ const uploadingFolder = ref(false)
 
 const customStyleSelected = computed(() => styleKey.value === 'custom')
 const visualStyleOptions = computed(() => [
-  { value: 'auto', label: 'AI 识别风格' },
+  { value: 'auto', label: isVi.value ? 'AI Tự nhận diện phong cách' : 'AI 识别风格' },
   ...(capabilities.value?.styles ?? [])
     .filter(style => style.key !== 'auto')
     .map(style => ({
@@ -63,7 +67,7 @@ const visualStyleOptions = computed(() => [
       label: style.label,
       image: `/style-thumbnails/${style.key}.png`,
     })),
-  { value: 'custom', label: '自定义风格', separator: true },
+  { value: 'custom', label: isVi.value ? 'Tùy biến phong cách riêng' : '自定义风格', separator: true },
 ])
 const sourceReady = computed(() => {
   if (sourceMode.value === 'single_upload') {
@@ -355,41 +359,41 @@ onBeforeUnmount(() => {
 <template>
   <CreationEntryShell
     eyebrow="AI REMAKE WORKSHOP"
-    description="上传成片或选择历史项目，让 AI 自动拆出设定与分镜并开启新一轮创作。"
+    :description="isVi ? 'Tải lên video tham chiếu hoặc chọn dự án cũ; AI tự động bóc tách nhân vật, bối cảnh, cắt cảnh và tạo phân cảnh mới.' : '上传成片或选择历史项目，让 AI 自动拆出设定与分镜并开启新一轮创作。'"
     width="wide"
   >
-    <template #title>拆解成片，重制<span class="creation-entry-accent">精品短剧</span></template>
+    <template #title>{{ isVi ? 'Bóc tách video, chuyển thể ' : '拆解成片，重制' }}<span class="creation-entry-accent">{{ isVi ? 'phim ngắn đỉnh cao' : '精品短剧' }}</span></template>
     <section v-if="loadingCapabilities" class="state-card" aria-live="polite">
-      <RefreshCcw class="spin" :size="20" /> 正在加载重制能力…
+      <RefreshCcw class="spin" :size="20" /> {{ isVi ? 'Đang tải cấu hình xưởng Remake…' : '正在加载重制能力…' }}
     </section>
     <section v-else-if="capabilityError" class="state-card state-card--error" role="alert">
       <span>{{ capabilityError }}</span>
-      <AppButton variant="secondary" size="sm" @click="loadCapabilities">重新加载</AppButton>
+      <AppButton variant="secondary" size="sm" @click="loadCapabilities">{{ isVi ? 'Tải lại' : '重新加载' }}</AppButton>
     </section>
 
     <form v-else-if="capabilities" class="remake-form" @submit.prevent="createProject">
       <Transition name="source-panel" mode="out-in">
         <label v-if="sourceMode === 'single_upload' && uploadState !== 'ready'" key="single-upload" class="source-stage upload-zone" :class="{ 'is-uploading': uploadState === 'uploading' }">
           <span class="source-stage-icon"><UploadCloud :size="27" /></span>
-          <strong>{{ uploadState === 'uploading' ? '正在上传并校验视频…' : '选择 MP4 / MOV 视频' }}</strong>
-          <span>单视频不超过 500 MB，时长不超过 20 分钟</span>
+          <strong>{{ uploadState === 'uploading' ? (isVi ? 'Đang tải lên và kiểm tra video…' : '正在上传并校验视频…') : (isVi ? 'Chọn tệp video MP4 hoặc MOV' : '选择 MP4 / MOV 视频') }}</strong>
+          <span>{{ isVi ? 'Mỗi video tối đa 500 MB, thời lượng không quá 20 phút' : '单视频不超过 500 MB，时长不超过 20 分钟' }}</span>
           <input type="file" accept="video/mp4,video/quicktime,.mp4,.mov" :disabled="uploadState === 'uploading'" @change="handleFileChange" />
         </label>
         <article v-else-if="sourceMode === 'single_upload' && stagedUpload" key="single-ready" class="source-stage uploaded-file">
           <span class="source-stage-icon is-ready"><CheckCircle2 :size="25" /></span>
           <div><strong>{{ stagedUpload.original_filename }}</strong><small>{{ fileMeta }}</small></div>
-          <AppButton type="button" variant="ghost" size="sm" icon-only aria-label="移除视频" @click="removeFile"><X :size="17" /></AppButton>
+          <AppButton type="button" variant="ghost" size="sm" icon-only aria-label="移除视频" :title="isVi ? 'Gỡ bỏ video' : '移除视频'" @click="removeFile"><X :size="17" /></AppButton>
         </article>
 
         <div v-else-if="sourceMode === 'folder_upload'" key="folder-upload" class="source-stage folder-selector">
           <label class="folder-zone" :class="{ 'is-uploading': uploadingFolder }">
             <span class="source-stage-icon"><FolderUp :size="25" /></span>
-            <span><strong>{{ folderEntries.length ? '重新选择文件夹' : '选择包含多集视频的文件夹' }}</strong><small>文件名需包含“第12集 / EP12 / E12”等集数信息</small></span>
+            <span><strong>{{ folderEntries.length ? (isVi ? 'Chọn lại thư mục khác' : '重新选择文件夹') : (isVi ? 'Chọn thư mục chứa video các tập' : '选择包含多集视频的文件夹') }}</strong><small>{{ isVi ? 'Tên tệp cần chứa thông tin tập: \"Tập 1\", \"EP01\", \"E01\"...' : '文件名需包含“第12集 / EP12 / E12”等集数信息' }}</small></span>
             <input data-folder-input type="file" accept="video/mp4,video/quicktime,.mp4,.mov" multiple webkitdirectory="" :disabled="uploadingFolder" @change="handleFolderChange" />
           </label>
           <div v-if="folderEntries.length" class="folder-table-wrap">
             <table class="folder-table">
-              <thead><tr><th>集数</th><th>文件名</th><th>大小</th><th>状态 / 进度</th><th>问题</th><th>操作</th></tr></thead>
+              <thead><tr><th>{{ isVi ? 'Tập' : '集数' }}</th><th>{{ isVi ? 'Tên tệp' : '文件名' }}</th><th>{{ isVi ? 'Dung lượng' : '大小' }}</th><th>{{ isVi ? 'Trạng thái / Tiến độ' : '状态 / 进度' }}</th><th>{{ isVi ? 'Vấn đề' : '问题' }}</th><th>{{ isVi ? 'Thao tác' : '操作' }}</th></tr></thead>
               <tbody>
                 <tr v-for="entry in folderEntries" :key="entry.id" :data-folder-episode="entry.episodeNumber ?? undefined">
                   <td>{{ entry.episodeNumber ?? '—' }}</td>
@@ -397,22 +401,22 @@ onBeforeUnmount(() => {
                   <td>{{ formatFileSize(entry.file.size) }}</td>
                   <td><span class="folder-status" :class="`is-${entry.state}`">{{ folderStateLabel(entry) }}</span><progress v-if="entry.state === 'uploading'" :value="entry.progress" max="100" /></td>
                   <td class="folder-issue">{{ entry.issue || '—' }}</td>
-                  <td><AppButton v-if="entry.state === 'failed'" type="button" variant="secondary" size="sm" @click="retryFolderEntry(entry)">重试</AppButton><span v-else>—</span></td>
+                  <td><AppButton v-if="entry.state === 'failed'" type="button" variant="secondary" size="sm" @click="retryFolderEntry(entry)">{{ isVi ? 'Thử lại' : '重试' }}</AppButton><span v-else>—</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
           <label v-if="missingFolderEpisodes.length" class="gap-warning">
             <input v-model="gapConfirmed" type="checkbox" />
-            <span><strong>检测到断集：缺少第 {{ missingFolderEpisodes.join('、') }} 集</strong><small>断集不会阻止创建，但需要确认后继续。</small></span>
+            <span><strong>{{ isVi ? `Phát hiện thiếu tập: Thiếu tập ${missingFolderEpisodes.join(', ')}` : `检测到断集：缺少第 ${missingFolderEpisodes.join('、')} 集` }}</strong><small>{{ isVi ? 'Thiếu tập không ngăn cản tạo dự án, nhưng bạn cần xác nhận để tiếp tục.' : '断集不会阻止创建，但需要确认后继续。' }}</small></span>
           </label>
         </div>
 
         <div v-else-if="sourceMode === 'history'" key="history" class="source-stage history-selector">
           <div class="history-column">
-            <strong>短剧制作项目</strong>
-            <span v-if="loadingHistory" class="history-state"><RefreshCcw class="spin" :size="15" /> 正在加载…</span>
-            <span v-else-if="!historyProjects.length" class="history-state">暂无至少一集全部分镜已有视频的短剧项目</span>
+            <strong>{{ isVi ? 'Dự án phim ngắn' : '短剧制作项目' }}</strong>
+            <span v-if="loadingHistory" class="history-state"><RefreshCcw class="spin" :size="15" /> {{ isVi ? 'Đang tải…' : '正在加载…' }}</span>
+            <span v-else-if="!historyProjects.length" class="history-state">{{ isVi ? 'Chưa có dự án nào có sẵn video để remake' : '暂无至少一集全部分镜已有视频的短剧项目' }}</span>
             <button
               v-for="project in historyProjects"
               :key="project.id"
@@ -422,14 +426,14 @@ onBeforeUnmount(() => {
               :data-history-project="project.id"
               @click="selectHistoryProject(project)"
             >
-              <span><strong>{{ project.name }}</strong><small>{{ project.available_episode_count }} 集可重制</small></span>
+              <span><strong>{{ project.name }}</strong><small>{{ isVi ? `${project.available_episode_count} tập có thể remake` : `${project.available_episode_count} 集可重制` }}</small></span>
               <ChevronRight :size="16" />
             </button>
           </div>
           <div class="history-column">
-            <strong>选择剧集</strong>
-            <span v-if="selectedHistoryProjectId === null" class="history-state">请先选择短剧制作项目</span>
-            <span v-else-if="loadingEpisodes" class="history-state"><RefreshCcw class="spin" :size="15" /> 正在检查完整性…</span>
+            <strong>{{ isVi ? 'Chọn tập phim' : '选择剧集' }}</strong>
+            <span v-if="selectedHistoryProjectId === null" class="history-state">{{ isVi ? 'Vui lòng chọn dự án phim ngắn trước' : '请先选择短剧制作项目' }}</span>
+            <span v-else-if="loadingEpisodes" class="history-state"><RefreshCcw class="spin" :size="15" /> {{ isVi ? 'Đang kiểm tra tính toàn vẹn…' : '正在检查完整性…' }}</span>
             <button
               v-for="episode in historyEpisodes"
               v-else
@@ -441,33 +445,33 @@ onBeforeUnmount(() => {
               :disabled="!episode.available"
               @click="selectHistoryEpisode(episode)"
             >
-              <span><strong>{{ episode.name }}</strong><small v-if="episode.available">{{ episode.scene_count }} 个镜头 · {{ formatDuration(episode.duration_seconds) }}</small><small v-else>{{ episode.unavailable_reason }}</small></span>
+              <span><strong>{{ episode.name }}</strong><small v-if="episode.available">{{ isVi ? `${episode.scene_count} cảnh quay · ${formatDuration(episode.duration_seconds)}` : `${episode.scene_count} 个镜头 · ${formatDuration(episode.duration_seconds)}` }}</small><small v-else>{{ episode.unavailable_reason }}</small></span>
               <CheckCircle2 v-if="selectedHistoryChapterId === episode.chapter_id" :size="17" />
             </button>
           </div>
         </div>
       </Transition>
 
-      <CreationConfigBar modes-label="来源类型">
+      <CreationConfigBar :modes-label="isVi ? 'Nguồn video' : '来源类型'">
         <template #modes>
           <AppButton type="button" variant="soft" size="sm" :active="sourceMode === 'single_upload'" data-source-mode="single_upload" :aria-pressed="sourceMode === 'single_upload'" :disabled="!capabilities.source_modes.single_upload" @click="selectSourceMode('single_upload')">
-            <Film :size="15" />单视频
+            <Film :size="15" />{{ isVi ? '1 Video' : '单视频' }}
           </AppButton>
           <AppButton type="button" variant="soft" size="sm" :active="sourceMode === 'folder_upload'" data-source-mode="folder_upload" :aria-pressed="sourceMode === 'folder_upload'" :disabled="!capabilities.source_modes.folder_upload" @click="selectSourceMode('folder_upload')">
-            <FolderUp :size="15" />文件夹
+            <FolderUp :size="15" />{{ isVi ? 'Thư mục' : '文件夹' }}
           </AppButton>
           <AppButton type="button" variant="soft" size="sm" :active="sourceMode === 'history'" data-source-mode="history" :aria-pressed="sourceMode === 'history'" :disabled="!capabilities.source_modes.history" @click="selectSourceMode('history')">
-            <History :size="15" />历史项目
+            <History :size="15" />{{ isVi ? 'Dự án cũ' : '历史项目' }}
           </AppButton>
         </template>
 
-        <AppSelect v-model="aspectRatio" class="format-select" ariaLabel="画面比例" :options="capabilities.aspect_ratios">
+        <AppSelect v-model="aspectRatio" class="format-select" :ariaLabel="isVi ? 'Tỷ lệ khung hình' : '画面比例'" :options="capabilities.aspect_ratios">
           <template #leading><Film :size="15" /></template>
         </AppSelect>
-        <AppSelect v-model="resolution" class="format-select" ariaLabel="清晰度" :options="capabilities.resolutions">
+        <AppSelect v-model="resolution" class="format-select" :ariaLabel="isVi ? 'Độ phân giải' : '清晰度'" :options="capabilities.resolutions">
           <template #leading><Monitor :size="15" /></template>
         </AppSelect>
-        <AppSelect v-model="styleKey" class="style-select" ariaLabel="视觉风格" menu-label="风格" :menu-width="230" :max-menu-height="404" align="end" :options="visualStyleOptions">
+        <AppSelect v-model="styleKey" class="style-select" :ariaLabel="isVi ? 'Phong cách mỹ thuật' : '视觉风格'" :menu-label="isVi ? 'Phong cách' : '风格'" :menu-width="230" :max-menu-height="404" align="end" :options="visualStyleOptions">
           <template #leading="{ option }">
             <img v-if="option.image" class="select-thumbnail" :src="option.image" alt="" />
             <span v-else class="custom-style-icon"><Sparkles :size="16" /></span>
@@ -480,20 +484,20 @@ onBeforeUnmount(() => {
       </CreationConfigBar>
 
       <label class="project-name-field">
-        <span>项目名称</span>
-        <input v-model="projectName" name="projectName" required maxlength="255" placeholder="例如：都市短剧重制版" />
+        <span>{{ isVi ? 'Tên dự án phim' : '项目名称' }}</span>
+        <input v-model="projectName" name="projectName" required maxlength="255" :placeholder="isVi ? 'Ví dụ: Đô thị dị năng (Remake)' : '例如：都市短剧重制版'" />
       </label>
 
       <div v-if="customStyleSelected" class="custom-prompt-panel">
-        <label for="remake-custom-style">自定义风格 Prompt</label>
-        <textarea id="remake-custom-style" v-model="customStylePrompt" required maxlength="2000" rows="4" placeholder="描述材质、光影、色彩与镜头运动风格" />
+        <label for="remake-custom-style">{{ isVi ? 'Prompt phong cách riêng' : '自定义风格 Prompt' }}</label>
+        <textarea id="remake-custom-style" v-model="customStylePrompt" required maxlength="2000" rows="4" :placeholder="isVi ? 'Mô tả chi tiết chất liệu, ánh sáng, màu sắc và góc quay điện ảnh' : '描述材质、光影、色彩与镜头运动风格'" />
         <small>{{ customStylePrompt.length }} / 2000</small>
       </div>
 
       <p v-if="errorMessage" class="form-error" role="alert">{{ errorMessage }}</p>
 
       <AppButton class="create-remake" variant="primary" size="lg" block type="submit" :disabled="!canSubmit" :loading="creating">
-        <span><Sparkles v-if="!creating" :size="18" />{{ creating ? '正在创建重制项目…' : '开始重制' }}</span>
+        <span><Sparkles v-if="!creating" :size="18" />{{ creating ? (isVi ? 'Đang tạo dự án remake…' : '正在创建重制项目…') : (isVi ? 'Bắt đầu chuyển thể' : '开始重制') }}</span>
         <ArrowRight v-if="!creating" class="create-arrow" :size="18" />
       </AppButton>
     </form>

@@ -30,7 +30,8 @@ import { appConfirm } from '@/shared/confirmDialog'
 import { notice } from '@/shared/notice'
 import type { AiModelConfig, ConfigEnumItem, EnumItem, GeneralConfig, GenerationCapabilities, ImageApiProtocol, ImageModelType, ModelPricing, VideoGenerationModelType } from '@/types'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 type ModelCategoryId = 'llm' | 'image' | 'video'
 type SettingsSection = 'models' | 'general'
@@ -116,7 +117,9 @@ const isEditing = computed(() => editingConfigId.value !== null)
 const selectedConfigs = computed(() => configs.value.filter(item => configTaskTypes(item).some(value => selectedCategory.value.taskTypes.includes(value))))
 const taskOptions = computed(() => selectedCategory.value.taskTypes.map(value => ({
   value: String(value),
-  label: taskTypes.value.find(item => item.value === value)?.label || ({ 1: '内容理解与人物提取', 2: '角色与场景参考图', 3: '分镜规划与提示词', 4: '视频片段生成', 5: '项目分析', 6: '重制' }[value] ?? `任务 ${value}`),
+  label: taskTypes.value.find(item => item.value === value)?.label || (isVi.value
+    ? ({ 1: 'Trích xuất thực thể & Hiểu nội dung', 2: 'Ảnh tham chiếu nhân vật & bối cảnh', 3: 'Kế hoạch phân cảnh & Prompt', 4: 'Kết xuất phân cảnh video', 5: 'Phân tích dự án', 6: 'Bóc tách Remake' }[value] ?? `Nhiệm vụ ${value}`)
+    : ({ 1: '内容理解与人物提取', 2: '角色与场景参考图', 3: '分镜规划与提示词', 4: '视频片段生成', 5: '项目分析', 6: '重制' }[value] ?? `任务 ${value}`)),
 })))
 
 const generationCapabilities = ref<GenerationCapabilities>({ image: {}, video: {} })
@@ -166,15 +169,17 @@ function activeCount(category: ModelCategory) {
 }
 
 function taskLabel(value: number) {
-  return taskTypes.value.find(item => item.value === value)?.label || ({ 1: '内容理解', 2: '参考图生成', 3: '分镜规划', 4: '视频生成', 5: '项目分析', 6: '重制' }[value] ?? `任务 ${value}`)
+  return taskTypes.value.find(item => item.value === value)?.label || (isVi.value
+    ? ({ 1: 'Hiểu nội dung', 2: 'Ảnh tham chiếu', 3: 'Phân cảnh', 4: 'Sinh video', 5: 'Phân tích dự án', 6: 'Remake' }[value] ?? `Nhiệm vụ ${value}`)
+    : ({ 1: '内容理解', 2: '参考图生成', 3: '分镜规划', 4: '视频生成', 5: '项目分析', 6: '重制' }[value] ?? `任务 ${value}`))
 }
 
 function protocolLabel(value: ImageApiProtocol) {
-  if (value === 'minimax') return 'MiniMax 官方'
-  if (value === 'dashscope') return '阿里云百炼 DashScope'
-  if (value === 'volcengine_ark') return '火山方舟 Seedream'
-  if (value === 'openrouter_compatible') return 'OpenRouter 兼容'
-  return 'OpenAI 兼容'
+  if (value === 'minimax') return isVi.value ? 'MiniMax Chính thức' : 'MiniMax 官方'
+  if (value === 'dashscope') return isVi.value ? 'Aliyun DashScope' : '阿里云百炼 DashScope'
+  if (value === 'volcengine_ark') return isVi.value ? 'ByteDance Volcengine Ark' : '火山方舟 Seedream'
+  if (value === 'openrouter_compatible') return isVi.value ? 'Tương thích OpenRouter' : 'OpenRouter 兼容'
+  return isVi.value ? 'Tương thích OpenAI' : 'OpenAI 兼容'
 }
 
 function videoProtocolFor(modelType: VideoGenerationModelType | ''): ImageApiProtocol {
@@ -435,10 +440,10 @@ onMounted(load)
     <header class="model-settings-header">
       <div>
         <span>APPLICATION SETTINGS</span>
-        <h1>设置</h1>
-        <p>统一管理生成模型与全局创作偏好。</p>
+        <h1>{{ isVi ? 'Cài đặt hệ thống' : '设置' }}</h1>
+        <p>{{ isVi ? 'Quản lý tập trung các mô hình AI sinh nội dung và tùy chọn sáng tạo toàn cục.' : '统一管理生成模型与全局创作偏好。' }}</p>
       </div>
-      <AppButton v-if="activeSection === 'models'" variant="primary" size="lg" type="button" @click="openCreate()"><Plus :size="16" />添加模型</AppButton>
+      <AppButton v-if="activeSection === 'models'" variant="primary" size="lg" type="button" @click="openCreate()"><Plus :size="16" />{{ isVi ? 'Thêm mô hình mới' : '添加模型' }}</AppButton>
     </header>
 
     <AppTabs class="settings-section-tabs" :model-value="activeSection" :items="settingsTabs" label="设置分类" @update:model-value="changeSettingsSection" />
@@ -446,8 +451,8 @@ onMounted(load)
     <template v-if="activeSection === 'models'">
     <section v-if="isTeamAdmin" class="model-source-banner">
       <div class="model-source-copy">
-        <strong>{{ configs.length ? `本团队已配置 ${configs.length} 个模型` : '尚未配置团队模型' }}</strong>
-        <p>此处只管理本团队自己的模型配置；平台模型不对团队显示。未配置时，生成任务将使用平台模型，费用从团队余额扣除。</p>
+        <strong>{{ configs.length ? (isVi ? `Đội nhóm đã cấu hình ${configs.length} mô hình` : `本团队已配置 ${configs.length} 个模型`) : (isVi ? 'Chưa cấu hình mô hình đội nhóm' : '尚未配置团队模型') }}</strong>
+        <p>{{ isVi ? 'Mục này chỉ quản lý mô hình riêng của đội nhóm; mô hình nền tảng không hiển thị tại đây. Khi chưa cấu hình, tác vụ sẽ dùng mô hình nền tảng, phí từ số dư đội nhóm (费用从团队余额扣除).' : '此处只管理本团队自己的模型配置；平台模型不对团队显示。未配置时，生成任务将使用平台模型，费用从团队余额扣除。' }}</p>
       </div>
     </section>
     <section class="model-category-grid" aria-label="模型能力分类">
@@ -464,7 +469,7 @@ onMounted(load)
       >
         <AppIconTile :tone="iconTone(category.id)" size="lg"><component :is="category.icon" :size="22" /></AppIconTile>
         <span class="category-copy"><small>{{ category.eyebrow }}</small><strong>{{ category.label }}</strong><p>{{ category.description }}</p></span>
-        <span class="category-status"><i :class="{ 'is-ready': activeCount(category) }" />{{ activeCount(category) ? `${activeCount(category)} 个模型运行中` : '尚未启用' }}</span>
+        <span class="category-status"><i :class="{ 'is-ready': activeCount(category) }" />{{ activeCount(category) ? (isVi ? `${activeCount(category)} mô hình đang chạy` : `${activeCount(category)} 个模型运行中`) : (isVi ? 'Chưa kích hoạt' : '尚未启用') }}</span>
       </AppButton>
     </section>
 
@@ -475,51 +480,51 @@ onMounted(load)
           <h2>{{ selectedCategory.label }}</h2>
           <p>{{ selectedCategory.description }}</p>
         </div>
-        <AppButton variant="secondary" size="sm" type="button" @click="openCreate(selectedCategory.id)"><Plus :size="15" />添加{{ selectedCategory.label }}</AppButton>
+        <AppButton variant="secondary" size="sm" type="button" @click="openCreate(selectedCategory.id)"><Plus :size="15" />{{ isVi ? `Thêm ${selectedCategory.label}` : `添加${selectedCategory.label}` }}</AppButton>
       </header>
 
-      <div v-if="loading" class="model-state">正在读取模型配置…</div>
+      <div v-if="loading" class="model-state">{{ isVi ? 'Đang đọc cấu hình mô hình…' : '正在读取模型配置…' }}</div>
       <div v-else-if="selectedConfigs.length" class="model-config-list">
         <article v-for="item in selectedConfigs" :key="item.id" class="model-config-card" :class="{ 'is-active': item.is_active }">
           <AppIconTile :tone="iconTone(selectedCategory.id)"><component :is="selectedCategory.icon" :size="19" /></AppIconTile>
           <div class="config-main">
             <div class="config-title">
               <h3>{{ item.name }}</h3>
-              <span v-if="!isTeamAdmin && item.scope" class="scope-badge" :class="item.scope === 'official' ? 'is-official' : 'is-team'">{{ item.scope === 'official' ? '平台配置' : '团队配置' }}</span>
-              <span :class="{ 'is-active': item.is_active }">{{ item.is_active ? '已启动' : '未启动' }}</span>
+              <span v-if="!isTeamAdmin && item.scope" class="scope-badge" :class="item.scope === 'official' ? 'is-official' : 'is-team'">{{ item.scope === 'official' ? (isVi ? 'Cấu hình nền tảng' : '平台配置') : (isVi ? 'Cấu hình đội nhóm' : '团队配置') }}</span>
+              <span :class="{ 'is-active': item.is_active }">{{ item.is_active ? (isVi ? 'Đang chạy' : '已启动') : (isVi ? 'Đã tắt' : '未启动') }}</span>
             </div>
             <p>{{ configTaskTypes(item).filter(taskType => selectedCategory.taskTypes.includes(taskType)).map(taskLabel).join(' · ') }}</p>
             <div class="config-metadata">
-              <span><Settings2 :size="13" />{{ item.model || '未设置模型名称' }}</span>
+              <span><Settings2 :size="13" />{{ item.model || (isVi ? 'Chưa đặt Model ID' : '未设置模型名称') }}</span>
               <span><Server :size="13" />{{ providerHost(item.base_url) }}</span>
-              <span><Zap :size="13" />并发 {{ item.concurrency }}</span>
+              <span><Zap :size="13" />{{ isVi ? 'Đồng thời ' : '并发 ' }}{{ item.concurrency }}</span>
               <span v-if="selectedCategory.id === 'image'">{{ protocolLabel(item.api_protocol) }}</span>
-              <span v-if="selectedCategory.id === 'image'">{{ imageModelTypes.find(type => type.value === item.image_model_type)?.label || '未选择受支持类型' }}</span>
-              <span v-if="selectedCategory.id === 'video'">{{ videoModelTypes.find(type => type.value === item.video_model_type)?.label || '未选择受支持类型' }}</span>
-              <span v-if="selectedCategory.id === 'llm'">{{ item.supports_json_output ? 'JSON 格式化' : '提示词 JSON' }}</span>
+              <span v-if="selectedCategory.id === 'image'">{{ imageModelTypes.find(type => type.value === item.image_model_type)?.label || (isVi ? 'Chưa chọn loại mô hình' : '未选择受支持类型') }}</span>
+              <span v-if="selectedCategory.id === 'video'">{{ videoModelTypes.find(type => type.value === item.video_model_type)?.label || (isVi ? 'Chưa chọn loại mô hình' : '未选择受支持类型') }}</span>
+              <span v-if="selectedCategory.id === 'llm'">{{ item.supports_json_output ? (isVi ? 'JSON có cấu trúc' : 'JSON 格式化') : (isVi ? 'Prompt JSON' : '提示词 JSON') }}</span>
             </div>
           </div>
           <div class="config-actions">
             <template v-if="canManage(item)">
-              <AppButton v-if="!item.is_active" variant="soft" size="sm" type="button" title="启用配置" @click="activate(item)"><Power :size="15" /><span>启用</span></AppButton>
+              <AppButton v-if="!item.is_active" variant="soft" size="sm" type="button" :title="isVi ? 'Kích hoạt cấu hình' : '启用配置'" @click="activate(item)"><Power :size="15" /><span>{{ isVi ? 'Kích hoạt' : '启用' }}</span></AppButton>
               <template v-else>
-                <span class="active-check"><CheckCircle2 :size="16" />运行中</span>
-                <AppButton variant="soft" size="sm" type="button" title="停用配置" @click="deactivate(item)"><Power :size="15" /><span>停用</span></AppButton>
+                <span class="active-check"><CheckCircle2 :size="16" />{{ isVi ? 'Đang chạy' : '运行中' }}</span>
+                <AppButton variant="soft" size="sm" type="button" :title="isVi ? 'Tạm dừng cấu hình' : '停用配置'" @click="deactivate(item)"><Power :size="15" /><span>{{ isVi ? 'Tạm dừng' : '停用' }}</span></AppButton>
               </template>
               <span class="config-icon-actions">
-                <AppButton variant="secondary" size="sm" icon-only type="button" aria-label="编辑配置" title="编辑配置" @click="openEdit(item)"><Pencil :size="15" /></AppButton>
-                <AppButton variant="danger" size="sm" icon-only type="button" aria-label="删除配置" title="删除配置" @click="remove(item)"><Trash2 :size="15" /></AppButton>
+                <AppButton variant="secondary" size="sm" icon-only type="button" aria-label="编辑配置" :title="isVi ? 'Chỉnh sửa cấu hình' : '编辑配置'" @click="openEdit(item)"><Pencil :size="15" /></AppButton>
+                <AppButton variant="danger" size="sm" icon-only type="button" aria-label="删除配置" :title="isVi ? 'Xóa cấu hình' : '删除配置'" @click="remove(item)"><Trash2 :size="15" /></AppButton>
               </span>
             </template>
-            <span v-else class="official-badge" title="官方配置由平台维护，团队管理员只读">只读</span>
+            <span v-else class="official-badge" :title="isVi ? 'Cấu hình nền tảng do hệ thống quản lý, đội nhóm chỉ có quyền đọc' : '官方配置由平台维护，团队管理员只读'">{{ isVi ? 'Chỉ đọc' : '只读' }}</span>
           </div>
         </article>
       </div>
       <div v-else class="model-empty-state">
         <span><component :is="selectedCategory.icon" :size="25" /></span>
-        <h3>还没有{{ selectedCategory.label }}</h3>
+        <h3>{{ isVi ? `Chưa có cấu hình ${selectedCategory.label}` : `还没有${selectedCategory.label}` }}</h3>
         <p>{{ selectedCategory.description }}</p>
-        <AppButton variant="primary" size="sm" type="button" @click="openCreate(selectedCategory.id)"><Plus :size="15" />添加第一个配置</AppButton>
+        <AppButton variant="primary" size="sm" type="button" @click="openCreate(selectedCategory.id)"><Plus :size="15" />{{ isVi ? 'Thêm cấu hình đầu tiên' : '添加第一个配置' }}</AppButton>
       </div>
     </section>
     </template>
@@ -528,8 +533,8 @@ onMounted(load)
       <header>
         <div>
           <span>GENERAL PREFERENCES</span>
-          <h2>通用配置</h2>
-          <p>这些设置作用于之后新提交的生成任务，不会改写已有资产和分镜。</p>
+          <h2>{{ isVi ? 'Cấu hình chung' : '通用配置' }}</h2>
+          <p>{{ isVi ? 'Những thiết lập này áp dụng cho các tác vụ sinh mới tiếp theo, không làm thay đổi tài sản và phân cảnh đã tạo.' : '这些设置作用于之后新提交的生成任务，不会改写已有资产和分镜。' }}</p>
         </div>
       </header>
 
@@ -537,13 +542,13 @@ onMounted(load)
         <div class="general-setting-heading">
           <AppIconTile tone="accent" size="lg"><Languages :size="22" /></AppIconTile>
           <div>
-            <h3>提示词语言</h3>
-            <p>同时控制图片提示词、资产视觉特征与镜头提示词的输出语言。</p>
+            <h3>{{ isVi ? 'Ngôn ngữ Prompt AI' : '提示词语言' }}</h3>
+            <p>{{ isVi ? 'Đồng thời điều khiển ngôn ngữ đầu ra của prompt hình ảnh, đặc điểm thị giác tài sản và câu lệnh quay phim.' : '同时控制图片提示词、资产视觉特征与镜头提示词的输出语言。' }}</p>
           </div>
-          <span class="general-setting-status"><CheckCircle2 :size="14" />全局生效</span>
+          <span class="general-setting-status"><CheckCircle2 :size="14" />{{ isVi ? 'Áp dụng toàn cục' : '全局生效' }}</span>
         </div>
 
-        <div class="prompt-language-options" role="radiogroup" aria-label="提示词语言">
+        <div class="prompt-language-options" role="radiogroup" :aria-label="isVi ? 'Ngôn ngữ Prompt AI' : '提示词语言'">
           <button
             type="button"
             role="radio"
@@ -552,7 +557,7 @@ onMounted(load)
             @click="promptLanguage = 'zh'"
           >
             <span class="language-mark">中</span>
-            <span><strong>中文</strong><small>生成简体中文图片与镜头提示词</small></span>
+            <span><strong>{{ isVi ? 'Tiếng Trung (Mặc định)' : '中文' }}</strong><small>{{ isVi ? 'Tối ưu hoá cho mô hình Doubao, MiniMax, Wan3' : '生成简体中文图片与镜头提示词' }}</small></span>
             <Check v-if="promptLanguage === 'zh'" :size="17" />
           </button>
           <button
@@ -563,20 +568,20 @@ onMounted(load)
             @click="promptLanguage = 'en'"
           >
             <span class="language-mark">EN</span>
-            <span><strong>English</strong><small>Generate image and shot prompts in English</small></span>
+            <span><strong>English</strong><small>{{ isVi ? 'Tối ưu cho Midjourney, Runway, Kling, Sora quốc tế' : 'Generate image and shot prompts in English' }}</small></span>
             <Check v-if="promptLanguage === 'en'" :size="17" />
           </button>
         </div>
 
         <div class="general-setting-note">
-          <strong>生效范围</strong>
-          <span>章节资产提取、人物/场景/道具参考图、项目封面与自动分镜。</span>
+          <strong>{{ isVi ? 'Phạm vi hiệu lực' : '生效范围' }}</strong>
+          <span>{{ isVi ? 'Trích xuất thực thể, ảnh tham chiếu nhân vật / bối cảnh / đạo cụ, ảnh bìa dự án và tự động phân cảnh.' : '章节资产提取、人物/场景/道具参考图、项目封面与自动分镜。' }}</span>
         </div>
 
         <footer>
-          <span v-if="generalConfig">当前已保存：{{ generalConfig.prompt_language === 'zh' ? '中文' : 'English' }}</span>
+          <span v-if="generalConfig">{{ isVi ? `Hiện đang lưu: ${generalConfig.prompt_language === 'zh' ? 'Tiếng Trung' : 'Tiếng Anh'}` : `当前已保存：${generalConfig.prompt_language === 'zh' ? '中文' : 'English'}` }}</span>
           <AppButton variant="primary" size="lg" type="button" :loading="savingGeneral" @click="saveGeneralConfig">
-            {{ savingGeneral ? '保存中…' : '保存通用配置' }}
+            {{ savingGeneral ? (isVi ? 'Đang lưu…' : '保存中…') : (isVi ? 'Lưu cấu hình chung' : '保存通用配置') }}
           </AppButton>
         </footer>
       </article>
@@ -585,159 +590,159 @@ onMounted(load)
     <div v-if="showCreate" class="model-modal-backdrop" @click.self="showCreate = false">
       <form class="model-modal" autocomplete="off" @submit.prevent="saveConfig">
         <header>
-          <div><AppIconTile :tone="iconTone(selectedCategory.id)" size="sm"><component :is="selectedCategory.icon" :size="18" /></AppIconTile><div><small>{{ isEditing ? 'EDIT MODEL' : 'ADD MODEL' }}</small><h2>{{ isEditing ? '编辑' : '添加' }}{{ selectedCategory.label }}</h2></div></div>
-          <AppButton variant="soft" size="sm" icon-only type="button" aria-label="关闭" @click="showCreate = false"><X :size="18" /></AppButton>
+          <div><AppIconTile :tone="iconTone(selectedCategory.id)" size="sm"><component :is="selectedCategory.icon" :size="18" /></AppIconTile><div><small>{{ isEditing ? 'EDIT MODEL' : 'ADD MODEL' }}</small><h2>{{ isEditing ? (isVi ? 'Chỉnh sửa' : '编辑') : (isVi ? 'Thêm mới' : '添加') }} {{ selectedCategory.label }}</h2></div></div>
+          <AppButton variant="soft" size="sm" icon-only type="button" :aria-label="isVi ? 'Đóng' : '关闭'" @click="showCreate = false"><X :size="18" /></AppButton>
         </header>
 
         <div class="model-form-grid">
           <label v-if="selectedCategory.taskTypes.length > 1" class="is-full">
-            <span>能力用途</span>
-            <AppMultiSelect v-model="form.task_types" ariaLabel="能力用途" :options="taskOptions" />
-            <small>可同时选择多个用途；勾选“重制”表示该模型支持视频输入并可用于来源视频拆解。</small>
+            <span>{{ isVi ? 'Mục đích & Năng lực sử dụng' : '能力用途' }}</span>
+            <AppMultiSelect v-model="form.task_types" :ariaLabel="isVi ? 'Năng lực sử dụng' : '能力用途'" :options="taskOptions" />
+            <small>{{ isVi ? 'Có thể chọn nhiều mục đích cùng lúc; chọn \"Bóc tách Remake\" nếu mô hình hỗ trợ video đầu vào.' : '可同时选择多个用途；勾选“重制”表示该模型支持视频输入并可用于来源视频拆解。' }}</small>
           </label>
-          <label class="is-full"><span>配置名称</span><input v-model="form.name" name="model-config-name" required autocomplete="off" placeholder="例如：豆包 Seed 1.6" /></label>
-          <label class="is-full"><span>Base URL</span><span class="input-with-icon"><Server :size="15" /><input v-model="form.base_url" name="model-service-base-url" required autocomplete="off" inputmode="url" spellcheck="false" placeholder="https://api.example.com/v1" /></span></label>
+          <label class="is-full"><span>{{ isVi ? 'Tên cấu hình gợi nhớ' : '配置名称' }}</span><input v-model="form.name" name="model-config-name" required autocomplete="off" :placeholder="isVi ? 'Ví dụ: Doubao Seedance 2.5 hoặc DeepSeek Chat' : '例如：豆包 Seed 1.6'" /></label>
+          <label class="is-full"><span>{{ isVi ? 'API Base URL' : 'Base URL' }}</span><span class="input-with-icon"><Server :size="15" /><input v-model="form.base_url" name="model-service-base-url" required autocomplete="off" inputmode="url" spellcheck="false" placeholder="https://api.example.com/v1" /></span></label>
           <label class="is-full">
             <span>API Key</span>
             <span class="input-with-icon secret-input">
               <KeyRound :size="15" />
-              <input v-model="form.api_key" name="model-service-api-key" :type="showApiKey ? 'text' : 'password'" required autocomplete="new-password" autocapitalize="none" spellcheck="false" placeholder="输入模型服务密钥" />
-              <AppButton variant="ghost" size="sm" icon-only type="button" :aria-label="showApiKey ? '隐藏 API Key' : '显示 API Key'" :title="showApiKey ? '隐藏 API Key' : '显示 API Key'" @click="showApiKey = !showApiKey">
+              <input v-model="form.api_key" name="model-service-api-key" :type="showApiKey ? 'text' : 'password'" required autocomplete="new-password" autocapitalize="none" spellcheck="false" :placeholder="isVi ? 'Nhập khóa bí mật API của bạn' : '输入模型服务密钥'" />
+              <AppButton variant="ghost" size="sm" icon-only type="button" :aria-label="showApiKey ? (isVi ? 'Ẩn API Key' : '隐藏 API Key') : (isVi ? 'Hiện API Key' : '显示 API Key')" :title="showApiKey ? (isVi ? 'Ẩn API Key' : '隐藏 API Key') : (isVi ? 'Hiện API Key' : '显示 API Key')" @click="showApiKey = !showApiKey">
                 <EyeOff v-if="showApiKey" :size="16" />
                 <Eye v-else :size="16" />
               </AppButton>
             </span>
           </label>
-          <label><span>模型名称</span><input v-model="form.model" name="model-id" required autocomplete="off" spellcheck="false" placeholder="模型 ID" /></label>
-          <label><span>并发数</span><input v-model.number="form.concurrency" name="model-concurrency" type="number" min="1" required /></label>
+          <label><span>{{ isVi ? 'Tên định danh mô hình (Model ID)' : '模型名称' }}</span><input v-model="form.model" name="model-id" required autocomplete="off" spellcheck="false" :placeholder="isVi ? 'Mã định danh gọi API' : '模型 ID'" /></label>
+          <label><span>{{ isVi ? 'Số luồng xử lý đồng thời' : '并发数' }}</span><input v-model.number="form.concurrency" name="model-concurrency" type="number" min="1" required /></label>
           <label v-if="selectedCategory.id === 'image'" class="is-full">
-            <span>生图模型类型</span>
+            <span>{{ isVi ? 'Loại mô hình sinh ảnh' : '生图模型类型' }}</span>
             <select v-model="form.image_model_type" name="image-model-type" required @change="changeImageModelType">
-              <option disabled value="">请选择受支持的模型</option>
+              <option disabled value="">{{ isVi ? 'Vui lòng chọn mô hình được hỗ trợ' : '请选择受支持的模型' }}</option>
               <option v-for="item in imageModelTypes" :key="String(item.value)" :value="item.value">{{ item.label }}</option>
             </select>
-            <small>仅支持 Lite、Pro 和 GPT Image 2；清晰度、比例与格式由所选类型的后台能力定义。</small>
+            <small>{{ isVi ? 'Chỉ hỗ trợ Seedream Lite, Pro và GPT Image 2; độ rõ nét, tỷ lệ và định dạng do năng lực hệ thống quy định.' : '仅支持 Lite、Pro 和 GPT Image 2；清晰度、比例与格式由所选类型的后台能力定义。' }}</small>
           </label>
           <label v-if="selectedCategory.id === 'video'" class="is-full">
-            <span>视频模型类型</span>
+            <span>{{ isVi ? 'Loại mô hình sinh video' : '视频模型类型' }}</span>
             <select v-model="form.video_model_type" name="video-model-type" required @change="changeVideoModelType">
-              <option disabled value="">请选择受支持的视频模型</option>
+              <option disabled value="">{{ isVi ? 'Vui lòng chọn mô hình video được hỗ trợ' : '请选择受支持的视频模型' }}</option>
               <option v-for="item in videoModelTypes" :key="String(item.value)" :value="item.value">{{ item.label }}</option>
             </select>
-            <small>支持 Seedance 系列与 MiniMax H3；分辨率、比例、时长和请求格式由后台能力与适配器定义。</small>
+            <small>{{ isVi ? 'Hỗ trợ dòng Seedance, MiniMax H3 và Wan3; độ phân giải, tỷ lệ, thời lượng do bộ điều hợp định nghĩa.' : '支持 Seedance 系列与 MiniMax H3；分辨率、比例、时长和请求格式由后台能力与适配器定义。' }}</small>
           </label>
           <label v-if="selectedCategory.id === 'video'" class="is-full">
-            <span>接口协议</span>
+            <span>{{ isVi ? 'Giao thức API' : '接口协议' }}</span>
             <output class="model-readonly-value" aria-label="视频接口协议">{{ selectedVideoProtocolLabel }}</output>
             <small>{{ selectedVideoProtocolHint }}</small>
           </label>
           <label v-if="selectedCategory.id === 'image'" class="is-full">
-            <span>接口协议</span>
+            <span>{{ isVi ? 'Giao thức API' : '接口协议' }}</span>
             <select v-model="form.api_protocol" name="image-api-protocol">
               <option value="openai_compatible">OpenAI 兼容（GPT Image / 中转服务）</option>
               <option value="openrouter_compatible">OpenRouter 兼容（/images）</option>
               <option value="volcengine_ark">火山方舟 Seedream</option>
             </select>
-            <small>协议决定请求字段与尺寸适配，不依赖模型名称猜测供应商。</small>
+            <small>{{ isVi ? 'Giao thức quyết định cấu trúc gửi tin và căn chỉnh kích thước.' : '协议决定请求字段与尺寸适配，不依赖模型名称猜测供应商。' }}</small>
           </label>
           <label v-if="selectedCategory.id === 'llm'">
-            <span>上下文字符上限</span>
+            <span>{{ isVi ? 'Giới hạn ký tự ngữ cảnh' : '上下文字符上限' }}</span>
             <input
               v-model.number="form.max_context_characters"
               name="model-max-context-characters"
               type="number"
               min="1"
-              placeholder="留空表示不预检"
+              :placeholder="isVi ? 'Để trống nếu không giới hạn' : '留空表示不预检'"
             />
           </label>
           <label v-if="selectedCategory.id === 'llm'">
-            <span>思考模式</span>
+            <span>{{ isVi ? 'Chế độ suy nghĩ (Thinking Mode)' : '思考模式' }}</span>
             <select v-model="form.thinking" name="model-thinking">
-              <option value="">按模型默认</option>
-              <option value="enabled">开启思考（enabled）</option>
-              <option value="disabled">关闭思考（disabled）</option>
+              <option value="">{{ isVi ? 'Theo mặc định của mô hình' : '按模型默认' }}</option>
+              <option value="enabled">{{ isVi ? 'Bật suy nghĩ (enabled)' : '开启思考（enabled）' }}</option>
+              <option value="disabled">{{ isVi ? 'Tắt suy nghĩ (disabled)' : '关闭思考（disabled）' }}</option>
             </select>
-            <small>深度思考/推理模型可关闭思考以提速并避免正文被 reasoning 挤占。</small>
+            <small>{{ isVi ? 'Với các mô hình suy nghĩ sâu, có thể tắt để tăng tốc độ phản hồi.' : '深度思考/推理模型可关闭思考以提速并避免正文被 reasoning 挤占。' }}</small>
           </label>
           <label v-if="selectedCategory.id === 'llm'">
-            <span>最大输出 token</span>
+            <span>{{ isVi ? 'Giới hạn token xuất ra' : '最大输出 token' }}</span>
             <input
               v-model.number="form.max_tokens"
               name="model-max-tokens"
               type="number"
               min="1"
-              placeholder="留空按模型默认"
+              :placeholder="isVi ? 'Để trống theo mặc định mô hình' : '留空按模型默认'"
             />
-            <small>限制单次请求输出，避免 JSON 因达到 token 上限被截断。</small>
+            <small>{{ isVi ? 'Giới hạn lượng token mỗi lần trả về, tránh bị cắt ngang JSON.' : '限制单次请求输出，避免 JSON 因达到 token 上限被截断。' }}</small>
           </label>
           <label v-if="selectedCategory.id === 'llm'" class="is-full json-capability-field">
             <span class="json-capability-copy">
-              <strong>结构化 JSON 输出</strong>
-              <small>开启后发送 response_format=json_object；关闭后仅使用提示词约束 JSON。</small>
+              <strong>{{ isVi ? 'Định dạng JSON có cấu trúc' : '结构化 JSON 输出' }}</strong>
+              <small>{{ isVi ? 'Khi bật sẽ gửi response_format=json_object; khi tắt chỉ dùng prompt để ràng buộc.' : '开启后发送 response_format=json_object；关闭后仅使用提示词约束 JSON。' }}</small>
             </span>
-            <input v-model="form.supports_json_output" type="checkbox" role="switch" aria-label="结构化 JSON 输出" />
+            <input v-model="form.supports_json_output" type="checkbox" role="switch" :aria-label="isVi ? 'Định dạng JSON có cấu trúc' : '结构化 JSON 输出'" />
           </label>
         </div>
 
         <section v-if="selectedCategoryId === 'llm'" class="pricing-editor">
-          <span class="pricing-title">费用设置（元 / 百万 token）</span>
+          <span class="pricing-title">{{ isVi ? 'Cài đặt chi phí (Đơn vị tiền tệ / 1M token)' : '费用设置（元 / 百万 token）' }}</span>
           <div class="pricing-grid">
-            <label><span>输入单价</span><input v-model.number="textPricing.input_price_per_1m" type="number" min="0" step="0.01" /></label>
-            <label><span>输出单价</span><input v-model.number="textPricing.output_price_per_1m" type="number" min="0" step="0.01" /></label>
+            <label><span>{{ isVi ? 'Đơn giá Input' : '输入单价' }}</span><input v-model.number="textPricing.input_price_per_1m" type="number" min="0" step="0.01" /></label>
+            <label><span>{{ isVi ? 'Đơn giá Output' : '输出单价' }}</span><input v-model.number="textPricing.output_price_per_1m" type="number" min="0" step="0.01" /></label>
           </div>
         </section>
         <section v-else-if="selectedCategoryId === 'image' && pricingTierOptions.length" class="pricing-editor">
-          <span class="pricing-title">输出图费用（元 / 张）</span>
+          <span class="pricing-title">{{ isVi ? 'Đơn giá ảnh xuất ra (Đơn vị tiền tệ / tấm)' : '输出图费用（元 / 张）' }}</span>
           <div class="pricing-grid">
             <label v-for="tier in pricingTierOptions" :key="tier">
-              <span>清晰度 {{ tier }}</span>
+              <span>{{ isVi ? `Độ nét ${tier}` : `清晰度 ${tier}` }}</span>
               <input v-model.number="tierPrices[tier]" type="number" min="0" step="0.01" />
             </label>
           </div>
           <div class="pricing-sub">
-            <span class="pricing-title">输入图费用（图生图）</span>
+            <span class="pricing-title">{{ isVi ? 'Chi phí ảnh tham chiếu đầu vào (Image-to-Image)' : '输入图费用（图生图）' }}</span>
             <div class="pricing-grid">
-              <label><span>免费张数</span><input v-model.number="inputImagePricing.first_free" type="number" min="0" step="1" /></label>
-              <label><span>超出单价（元 / 张）</span><input v-model.number="inputImagePricing.price_per_image" type="number" min="0" step="0.01" /></label>
+              <label><span>{{ isVi ? 'Số ảnh miễn phí' : '免费张数' }}</span><input v-model.number="inputImagePricing.first_free" type="number" min="0" step="1" /></label>
+              <label><span>{{ isVi ? 'Đơn giá vượt hạn mức' : '超出单价（元 / 张）' }}</span><input v-model.number="inputImagePricing.price_per_image" type="number" min="0" step="0.01" /></label>
             </div>
           </div>
         </section>
         <section v-else-if="selectedCategoryId === 'video' && pricingTierOptions.length" class="pricing-editor">
-          <span class="pricing-title">{{ isSecondBillingVideo ? '生成视频（元 / 秒）' : '无视频参考（元 / 百万 token）' }}</span>
+          <span class="pricing-title">{{ isSecondBillingVideo ? (isVi ? 'Sinh video (Đơn vị / Giây)' : '生成视频（元 / 秒）') : (isVi ? 'Không tham chiếu video (Đơn vị / 1M token)' : '无视频参考（元 / 百万 token）') }}</span>
           <div class="pricing-grid">
             <label v-for="tier in pricingTierOptions" :key="tier">
-              <span>分辨率 {{ tier }}</span>
+              <span>{{ isVi ? `Độ phân giải ${tier}` : `分辨率 ${tier}` }}</span>
               <input v-model.number="tierPrices[tier]" type="number" min="0" step="0.01" />
             </label>
           </div>
           <div class="pricing-sub">
-            <span class="pricing-title">{{ isSecondBillingVideo ? '输入参考视频（元 / 秒，按输入时长）' : '有视频参考（元 / 百万 token）' }}</span>
+            <span class="pricing-title">{{ isSecondBillingVideo ? (isVi ? 'Video tham chiếu đầu vào (Đơn vị / Giây theo độ dài)' : '输入参考视频（元 / 秒，按输入时长）') : (isVi ? 'Có video tham chiếu (Đơn vị / 1M token)' : '有视频参考（元 / 百万 token）') }}</span>
             <div class="pricing-grid">
               <label v-for="tier in pricingTierOptions" :key="tier">
-                <span>分辨率 {{ tier }}</span>
+                <span>{{ isVi ? `Độ phân giải ${tier}` : `分辨率 ${tier}` }}</span>
                 <input v-model.number="videoRefPrices[tier]" type="number" min="0" step="0.01" />
               </label>
             </div>
           </div>
           <div v-if="isSecondBillingVideo" class="pricing-sub">
-            <span class="pricing-title">输入参考图片</span>
+            <span class="pricing-title">{{ isVi ? 'Ảnh tham chiếu đầu vào' : '输入参考图片' }}</span>
             <div class="pricing-grid">
-              <label><span>免费张数</span><input v-model.number="inputImagePricing.first_free" type="number" min="0" step="1" /></label>
-              <label><span>超出单价（元 / 张）</span><input v-model.number="inputImagePricing.price_per_image" type="number" min="0" step="0.01" /></label>
+              <label><span>{{ isVi ? 'Số ảnh miễn phí' : '免费张数' }}</span><input v-model.number="inputImagePricing.first_free" type="number" min="0" step="1" /></label>
+              <label><span>{{ isVi ? 'Đơn giá vượt hạn mức' : '超出单价（元 / 张）' }}</span><input v-model.number="inputImagePricing.price_per_image" type="number" min="0" step="0.01" /></label>
             </div>
-            <small>输入音频免费，不计入费用。</small>
+            <small>{{ isVi ? 'Âm thanh tham chiếu đầu vào được miễn phí, không tính phí.' : '输入音频免费，不计入费用。' }}</small>
           </div>
         </section>
 
         <section class="pricing-editor">
-          <span class="pricing-title">折扣设置（1=无折扣，0.9=9折，大于 1=加价倍数）</span>
+          <span class="pricing-title">{{ isVi ? 'Cài đặt chiết khấu (1 = Không giảm giá, 0.9 = Giảm 10%, > 1 = Tăng giá)' : '折扣设置（1=无折扣，0.9=9折，大于 1=加价倍数）' }}</span>
           <div class="pricing-grid">
-            <label><span>折扣倍数</span><input v-model.number="discountPricing.discount" type="number" min="0.01" step="0.01" /></label>
-            <label><span>折扣描述（可选）</span><input v-model="discountPricing.description" type="text" placeholder="例如：限时9折" /></label>
+            <label><span>{{ isVi ? 'Hệ số chiết khấu' : '折扣倍数' }}</span><input v-model.number="discountPricing.discount" type="number" min="0.01" step="0.01" /></label>
+            <label><span>{{ isVi ? 'Mô tả chiết khấu (Tùy chọn)' : '折扣描述（可选）' }}</span><input v-model="discountPricing.description" type="text" :placeholder="isVi ? 'Ví dụ: Ưu đãi đặc biệt' : '例如：限时9折'" /></label>
           </div>
         </section>
 
-        <footer><AppButton variant="secondary" size="sm" type="button" @click="showCreate = false">取消</AppButton><AppButton variant="primary" size="sm" type="submit" :loading="creating">{{ creating ? '保存中…' : (isEditing ? '保存修改' : '创建配置') }}</AppButton></footer>
+        <footer><AppButton variant="secondary" size="sm" type="button" @click="showCreate = false">{{ isVi ? 'Hủy' : '取消' }}</AppButton><AppButton variant="primary" size="sm" type="submit" :loading="creating">{{ creating ? (isVi ? 'Đang lưu…' : '保存中…') : (isEditing ? (isVi ? 'Lưu thay đổi' : '保存修改') : (isVi ? 'Tạo cấu hình' : '创建配置')) }}</AppButton></footer>
       </form>
     </div>
   </main>

@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Activity, Clapperboard, Coins, Image, Type } from 'lucide-vue-next'
 import AppSelect from '@/components/AppSelect.vue'
 import { api, statusLabel } from '@/api'
 import { useAuthStore } from '@/features/auth/authStore'
 import { notice } from '@/shared/notice'
 import type { BillingProject, BillingRecord, BillingSummary } from '@/types'
+
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 const summary = ref<BillingSummary | null>(null)
 const projects = ref<BillingProject[]>([])
@@ -18,13 +22,24 @@ const selectedProjectId = ref('all')
 const auth = useAuthStore()
 const showSourceColumn = computed(() => auth.enabled === true)
 function costSourceLabel(source?: string) {
-  if (source === 'team_key') return '团队 Key'
-  if (source === 'balance') return '团队余额'
-  return '平台'
+  if (source === 'team_key') return isVi.value ? 'API Key nhóm' : '团队 Key'
+  if (source === 'balance') return isVi.value ? 'Số dư nhóm' : '团队余额'
+  return isVi.value ? 'Hệ thống' : '平台'
 }
 
-const billingTypeLabel = (value: string) => ({ text: '文本', image: '生图', video: '视频' }[value] || value)
-const taskTypeLabel = (value: number) => ({ 1: '提取', 2: '参考图', 3: '分镜', 4: '视频', 5: '项目分析' }[value] || `任务 ${value}`)
+const billingTypeLabel = (value: string) => {
+  if (isVi.value) {
+    return ({ text: 'Văn bản', image: 'Sinh ảnh', video: 'Sinh video' }[value] || value)
+  }
+  return ({ text: '文本', image: '生图', video: '视频' }[value] || value)
+}
+
+const taskTypeLabel = (value: number) => {
+  if (isVi.value) {
+    return ({ 1: 'Bóc tách', 2: 'Ảnh tham chiếu', 3: 'Phân cảnh', 4: 'Video', 5: 'Phân tích dự án' }[value] || `Tác vụ ${value}`)
+  }
+  return ({ 1: '提取', 2: '参考图', 3: '分镜', 4: '视频', 5: '项目分析' }[value] || `任务 ${value}`)
+}
 
 function money(value: number): string {
   if (!value) return '¥0'
@@ -41,12 +56,14 @@ function recordDiscount(item: BillingRecord): number {
   return Number.isFinite(value) && value > 0 && value !== 1 ? value : 1
 }
 function discountText(discount: number): string {
-  if (discount < 1) return `${Math.round(discount * 100) / 10}折`
+  if (discount < 1) {
+    return isVi.value ? `Giảm ${Math.round((1 - discount) * 100)}%` : `${Math.round(discount * 100) / 10}折`
+  }
   return `${discount}×`
 }
 
 const projectOptions = computed(() => [
-  { value: 'all', label: '全部项目' },
+  { value: 'all', label: isVi.value ? 'Tất cả dự án' : '全部项目' },
   ...projects.value.map(item => ({ value: String(item.novel_id), label: item.novel_name })),
 ])
 const selectedProject = computed(() => (
@@ -58,7 +75,7 @@ const billingBreakdown = computed(() => {
   return map
 })
 const projectName = (novelId: number) => (
-  projects.value.find(item => item.novel_id === novelId)?.novel_name || `项目 ${novelId}`
+  projects.value.find(item => item.novel_id === novelId)?.novel_name || (isVi.value ? `Dự án ${novelId}` : `项目 ${novelId}`)
 )
 const pages = computed(() => Math.max(1, Math.ceil(totalRecords.value / pageSize.value)))
 
@@ -80,19 +97,25 @@ function usageLabel(item: BillingRecord): string {
   const usage = item.usage || {}
   const num = (value: unknown) => Number(value) || 0
   if (item.billing_type === 'text') {
-    return `输入 ${formatTokens(num(usage.input_tokens))} · 输出 ${formatTokens(num(usage.output_tokens))} token`
+    return isVi.value
+      ? `Đầu vào ${formatTokens(num(usage.input_tokens))} · Đầu ra ${formatTokens(num(usage.output_tokens))} token`
+      : `输入 ${formatTokens(num(usage.input_tokens))} · 输出 ${formatTokens(num(usage.output_tokens))} token`
   }
   if (item.billing_type === 'image') {
     const count = num(usage.image_count)
     const clarity = usage.clarity ? ` @${usage.clarity}` : ''
     const input = num(usage.input_image_count)
-    return `${count} 张${clarity}${input ? ` · 输入 ${input} 张` : ''}`
+    return isVi.value
+      ? `${count} ảnh${clarity}${input ? ` · Đầu vào ${input} ảnh` : ''}`
+      : `${count} 张${clarity}${input ? ` · 输入 ${input} 张` : ''}`
   }
   const seconds = num(usage.seconds)
   const resolution = usage.resolution ? ` @${usage.resolution}` : ''
   const input = num(usage.input_video_seconds)
   const inputImages = num(usage.input_image_count)
-  return `${seconds}s${resolution}${input ? ` · 参考视频 ${input}s` : ''}${inputImages ? ` · 输入图片 ${inputImages} 张` : ''}`
+  return isVi.value
+    ? `${seconds}s${resolution}${input ? ` · Video tham chiếu ${input}s` : ''}${inputImages ? ` · Ảnh đầu vào ${inputImages} tấm` : ''}`
+    : `${seconds}s${resolution}${input ? ` · 参考视频 ${input}s` : ''}${inputImages ? ` · 输入图片 ${inputImages} 张` : ''}`
 }
 
 function currentNovelId(): number | undefined {
@@ -156,64 +179,64 @@ onMounted(load)
     <header class="billing-header">
       <div>
         <span>COST DASHBOARD</span>
-        <h1>成本看板</h1>
-        <p>每个模型的调用成本，按项目与维度汇总。</p>
+        <h1>{{ isVi ? 'Bảng Thống Kê Chi Phí' : '成本看板' }}</h1>
+        <p>{{ isVi ? 'Chi phí gọi các mô hình AI, tổng hợp theo từng dự án và loại tác vụ.' : '每个模型的调用成本，按项目与维度汇总。' }}</p>
       </div>
       <AppSelect
         v-model="selectedProjectId"
         class="billing-project-filter"
         :options="projectOptions"
-        ariaLabel="按项目过滤成本看板"
+        :ariaLabel="isVi ? 'Lọc bảng chi phí theo dự án' : '按项目过滤成本看板'"
         @update:model-value="selectProject"
       />
     </header>
 
-    <div v-if="loading" class="billing-state">正在读取成本数据…</div>
+    <div v-if="loading" class="billing-state">{{ isVi ? 'Đang tải dữ liệu chi phí…' : '正在读取成本数据…' }}</div>
     <template v-else>
-      <section class="summary-grid" aria-label="成本汇总">
+      <section class="summary-grid" :aria-label="isVi ? 'Tổng hợp chi phí' : '成本汇总'">
         <article class="stat-card is-primary">
-          <span class="stat-label"><Coins :size="15" />总成本</span>
+          <span class="stat-label"><Coins :size="15" />{{ isVi ? 'Tổng chi phí' : '总成本' }}</span>
           <strong class="stat-value">{{ money(summary?.total_cost ?? 0) }}</strong>
-          <small class="stat-sub">{{ selectedProject ? selectedProject.novel_name : '全部项目累计' }}</small>
+          <small class="stat-sub">{{ selectedProject ? selectedProject.novel_name : (isVi ? 'Tích lũy tất cả dự án' : '全部项目累计') }}</small>
         </article>
         <article class="stat-card">
-          <span class="stat-label"><Activity :size="15" />调用次数</span>
+          <span class="stat-label"><Activity :size="15" />{{ isVi ? 'Lượt gọi' : '调用次数' }}</span>
           <strong class="stat-value">{{ summary?.total_records ?? 0 }}</strong>
-          <small class="stat-sub">次模型调用</small>
+          <small class="stat-sub">{{ isVi ? 'lượt gọi mô hình' : '次模型调用' }}</small>
         </article>
         <article class="stat-card is-text">
-          <span class="stat-label"><Type :size="15" />文本</span>
+          <span class="stat-label"><Type :size="15" />{{ isVi ? 'Văn bản' : '文本' }}</span>
           <strong class="stat-value">{{ money(billingBreakdown.text) }}</strong>
         </article>
         <article class="stat-card is-image">
-          <span class="stat-label"><Image :size="15" />生图</span>
+          <span class="stat-label"><Image :size="15" />{{ isVi ? 'Sinh ảnh' : '生图' }}</span>
           <strong class="stat-value">{{ money(billingBreakdown.image) }}</strong>
         </article>
         <article class="stat-card is-video">
-          <span class="stat-label"><Clapperboard :size="15" />视频</span>
+          <span class="stat-label"><Clapperboard :size="15" />{{ isVi ? 'Sinh video' : '视频' }}</span>
           <strong class="stat-value">{{ money(billingBreakdown.video) }}</strong>
         </article>
       </section>
 
       <section class="table-card">
         <header class="table-card__header">
-          <h2>调用流水</h2>
+          <h2>{{ isVi ? 'Nhật ký gọi mô hình' : '调用流水' }}</h2>
           <small v-if="selectedProject">{{ selectedProject.novel_name }}</small>
-          <small v-else>全部项目</small>
+          <small v-else>{{ isVi ? 'Tất cả dự án' : '全部项目' }}</small>
         </header>
         <table class="data-table">
           <thead>
             <tr>
-              <th>时间</th>
-              <th>项目</th>
-              <th>维度</th>
-              <th>任务</th>
-              <th>模型</th>
-              <th>用量</th>
-              <th>时长</th>
-              <th>状态</th>
-              <th v-if="showSourceColumn">来源</th>
-              <th class="is-num">成本</th>
+              <th>{{ isVi ? 'Thời gian' : '时间' }}</th>
+              <th>{{ isVi ? 'Dự án' : '项目' }}</th>
+              <th>{{ isVi ? 'Phân loại' : '维度' }}</th>
+              <th>{{ isVi ? 'Tác vụ' : '任务' }}</th>
+              <th>{{ isVi ? 'Mô hình' : '模型' }}</th>
+              <th>{{ isVi ? 'Mức sử dụng' : '用量' }}</th>
+              <th>{{ isVi ? 'Thời lượng' : '时长' }}</th>
+              <th>{{ isVi ? 'Trạng thái' : '状态' }}</th>
+              <th v-if="showSourceColumn">{{ isVi ? 'Nguồn chi' : '来源' }}</th>
+              <th class="is-num">{{ isVi ? 'Chi phí' : '成本' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -237,20 +260,20 @@ onMounted(load)
                 {{ money(item.cost) }}
               </td>
             </tr>
-            <tr v-if="!records.length"><td :colspan="showSourceColumn ? 10 : 9" class="empty">暂无调用记录</td></tr>
+            <tr v-if="!records.length"><td :colspan="showSourceColumn ? 10 : 9" class="empty">{{ isVi ? 'Chưa có bản ghi gọi mô hình' : '暂无调用记录' }}</td></tr>
           </tbody>
         </table>
         <footer v-if="totalRecords > 0" class="pager">
-          <span class="pager-total">共 {{ totalRecords }} 条</span>
+          <span class="pager-total">{{ isVi ? `Tổng ${totalRecords} bản ghi` : `共 ${totalRecords} 条` }}</span>
           <div class="pager-controls">
-            <select v-model.number="pageSize" class="pager-size" aria-label="每页条数" @change="changePageSize">
-              <option :value="20">20 条/页</option>
-              <option :value="50">50 条/页</option>
-              <option :value="100">100 条/页</option>
+            <select v-model.number="pageSize" class="pager-size" :aria-label="isVi ? 'Số bản ghi mỗi trang' : '每页条数'" @change="changePageSize">
+              <option :value="20">{{ isVi ? '20 bản ghi/trang' : '20 条/页' }}</option>
+              <option :value="50">{{ isVi ? '50 bản ghi/trang' : '50 条/页' }}</option>
+              <option :value="100">{{ isVi ? '100 bản ghi/trang' : '100 条/页' }}</option>
             </select>
-            <button type="button" :disabled="page <= 1" @click="changePage(page - 1)">上一页</button>
+            <button type="button" :disabled="page <= 1" @click="changePage(page - 1)">{{ isVi ? 'Trang trước' : '上一页' }}</button>
             <span>{{ page }} / {{ pages }}</span>
-            <button type="button" :disabled="page >= pages" @click="changePage(page + 1)">下一页</button>
+            <button type="button" :disabled="page >= pages" @click="changePage(page + 1)">{{ isVi ? 'Trang sau' : '下一页' }}</button>
           </div>
         </footer>
       </section>

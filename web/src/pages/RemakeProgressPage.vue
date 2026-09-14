@@ -14,10 +14,13 @@ import {
 } from 'lucide-vue-next'
 import AppButton from '@/components/AppButton.vue'
 import { api } from '@/api'
+import { useI18n } from 'vue-i18n'
 import { TaskStatusEnum, type RemakeProgressSnapshot, type RemakeProgressSource } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 const projectId = computed(() => Number(route.params.projectId))
 const snapshot = ref<RemakeProgressSnapshot | null>(null)
 const loading = ref(true)
@@ -29,15 +32,15 @@ let streamGeneration = 0
 let streamController: AbortController | null = null
 let redirecting = false
 
-const stages = [
-  { key: 'queued', label: '进入拆解队列', description: '后台任务已创建，可以安全离开页面。', threshold: 0 },
-  { key: 'preparing', label: '准备视频素材', description: '校验并转换为模型可分析的视频。', threshold: 10 },
-  { key: 'extracting_assets', label: '识别全局设定', description: '提取角色、场景与关键道具。', threshold: 20 },
-  { key: 'detecting_scenes', label: '检测并切分镜头', description: '分析转场和镜头边界。', threshold: 42 },
-  { key: 'generating_storyboards', label: '生成专业分镜', description: '逐镜头生成画面、动作与运镜描述。', threshold: 55 },
-  { key: 'persisting', label: '保存设定与分镜', description: '写入项目资产和分镜工作区。', threshold: 88 },
-  { key: 'completed', label: '拆解完成', description: '即将进入设定与分镜页面。', threshold: 100 },
-] as const
+const stages = computed(() => [
+  { key: 'queued', label: isVi.value ? 'Đưa vào hàng đợi' : '进入拆解队列', description: isVi.value ? 'Tác vụ đã tạo trên máy chủ, có thể an tâm rời trang.' : '后台任务已创建，可以安全离开页面。', threshold: 0 },
+  { key: 'preparing', label: isVi.value ? 'Chuẩn bị dữ liệu video' : '准备视频素材', description: isVi.value ? 'Kiểm tra và chuẩn hóa định dạng video cho AI.' : '校验并转换为模型可分析的视频。', threshold: 10 },
+  { key: 'extracting_assets', label: isVi.value ? 'Nhận diện thiết lập toàn cục' : '识别全局设定', description: isVi.value ? 'Trích xuất nhân vật, bối cảnh và đạo cụ chính.' : '提取角色、场景与关键道具。', threshold: 20 },
+  { key: 'detecting_scenes', label: isVi.value ? 'Phát hiện & Cắt phân cảnh' : '检测并切分镜头', description: isVi.value ? 'Phân tích điểm chuyển cảnh và ranh giới shot.' : '分析转场和镜头边界。', threshold: 42 },
+  { key: 'generating_storyboards', label: isVi.value ? 'Tạo kịch bản phân cảnh' : '生成专业分镜', description: isVi.value ? 'Tạo mô tả hình ảnh, hành động và chuyển động camera.' : '逐镜头生成画面、动作与运镜描述。', threshold: 55 },
+  { key: 'persisting', label: isVi.value ? 'Lưu thiết lập & Storyboard' : '保存设定与分镜', description: isVi.value ? 'Ghi dữ liệu vào tài sản dự án và không gian phân cảnh.' : '写入项目资产和分镜工作区。', threshold: 88 },
+  { key: 'completed', label: isVi.value ? 'Bóc tách hoàn tất' : '拆解完成', description: isVi.value ? 'Chuẩn bị chuyển sang bàn làm việc kịch bản và phân cảnh.' : '即将进入设定与分镜页面。', threshold: 100 },
+])
 
 const isCompleted = computed(() => snapshot.value?.aggregate_status === 'completed')
 const hasFailures = computed(() => Boolean(snapshot.value?.source_summary.failed))
@@ -48,16 +51,16 @@ const activeStage = computed(() => {
   return activeTask?.stage || (isCompleted.value ? 'completed' : 'queued')
 })
 const statusTitle = computed(() => {
-  if (isCompleted.value) return '视频拆解完成'
-  if (snapshot.value?.aggregate_status === 'failed') return '视频拆解失败'
-  if (snapshot.value?.aggregate_status === 'partial_failed') return '部分剧集拆解失败'
-  if (snapshot.value?.aggregate_status === 'queued') return '等待开始拆解'
-  return '正在拆解视频'
+  if (isCompleted.value) return isVi.value ? 'Bóc tách video hoàn tất' : '视频拆解完成'
+  if (snapshot.value?.aggregate_status === 'failed') return isVi.value ? 'Bóc tách video thất bại' : '视频拆解失败'
+  if (snapshot.value?.aggregate_status === 'partial_failed') return isVi.value ? 'Một số tập bóc tách thất bại' : '部分剧集拆解失败'
+  if (snapshot.value?.aggregate_status === 'queued') return isVi.value ? 'Đang chờ bắt đầu bóc tách' : '等待开始拆解'
+  return isVi.value ? 'Đang bóc tách video' : '正在拆解视频'
 })
 const statusDescription = computed(() => {
-  if (isCompleted.value) return '设定和分镜已经生成，正在为你打开创作页面。'
-  if (hasFailures.value) return '已完成的剧集会保留，可单独重试失败剧集。'
-  return 'AI 正在识别设定、切分镜头并生成分镜。关闭或离开本页面不会中断后台任务。'
+  if (isCompleted.value) return isVi.value ? 'Thiết lập và phân cảnh đã tạo xong, đang mở không gian sáng tạo cho bạn.' : '设定和分镜已经生成，正在为你打开创作页面。'
+  if (hasFailures.value) return isVi.value ? 'Các tập hoàn thành được giữ nguyên, có thể thử lại riêng các tập lỗi.' : '已完成的剧集会保留，可单独重试失败剧集。'
+  return isVi.value ? 'AI đang nhận diện thiết lập, cắt cảnh và tạo phân cảnh. Đóng hoặc rời trang sẽ không làm gián đoạn tác vụ nền.' : 'AI 正在识别设定、切分镜头并生成分镜。关闭或离开本页面不会中断后台任务。'
 })
 
 function isTerminalTask(source: RemakeProgressSource) {
@@ -66,14 +69,14 @@ function isTerminalTask(source: RemakeProgressSource) {
 
 function sourceStatusLabel(source: RemakeProgressSource) {
   const status = source.task?.status
-  if (status === TaskStatusEnum.COMPLETED) return '已完成'
-  if (status === TaskStatusEnum.FAILED || status === TaskStatusEnum.CANCELLED) return '拆解失败'
+  if (status === TaskStatusEnum.COMPLETED) return isVi.value ? 'Đã hoàn tất' : '已完成'
+  if (status === TaskStatusEnum.FAILED || status === TaskStatusEnum.CANCELLED) return isVi.value ? 'Bóc tách lỗi' : '拆解失败'
   if (status === TaskStatusEnum.PROCESSING) return stageLabel(source.task?.stage)
-  return '队列中'
+  return isVi.value ? 'Trong hàng đợi' : '队列中'
 }
 
 function stageLabel(stage?: string | null) {
-  return stages.find(item => item.key === stage)?.label || '正在处理'
+  return stages.value.find(item => item.key === stage)?.label || (isVi.value ? 'Đang xử lý' : '正在处理')
 }
 
 function stageState(key: string, threshold: number) {
@@ -227,12 +230,12 @@ onBeforeUnmount(() => {
         </article>
 
         <article class="episodes-card">
-          <header><div><small>EPISODES</small><h2>剧集进度</h2></div></header>
+          <header><div><small>EPISODES</small><h2>{{ isVi ? 'Tiến độ từng tập' : '剧集进度' }}</h2></div></header>
           <div class="episode-list">
             <section v-for="source in snapshot.sources" :key="source.source_id" class="episode-item" :class="{ 'is-failed': source.task?.status === TaskStatusEnum.FAILED || source.task?.status === TaskStatusEnum.CANCELLED }">
               <span class="episode-icon"><Film :size="17" /></span>
               <div class="episode-copy">
-                <strong>第 {{ source.episode_number }} 集</strong>
+                <strong>{{ isVi ? `Tập ${source.episode_number}` : `第 ${source.episode_number} 集` }}</strong>
                 <p>{{ source.original_filename }}</p>
                 <div><span :style="{ width: `${source.task?.progress || 0}%` }" /></div>
               </div>
@@ -247,7 +250,7 @@ onBeforeUnmount(() => {
                 size="xs"
                 :loading="retryingSourceIds.has(source.source_id)"
                 @click="retrySource(source)"
-              ><RotateCcw v-if="!retryingSourceIds.has(source.source_id)" :size="13" />重试</AppButton>
+              ><RotateCcw v-if="!retryingSourceIds.has(source.source_id)" :size="13" />{{ isVi ? 'Thử lại' : '重试' }}</AppButton>
               <p v-if="source.task?.error_message" class="episode-error">{{ source.task.error_message }}</p>
             </section>
           </div>
@@ -255,9 +258,9 @@ onBeforeUnmount(() => {
       </section>
 
       <footer class="progress-footer">
-        <p><strong>可以放心离开</strong><span>任务状态和结果保存在后台，稍后从项目列表回来会继续显示最新进度。</span></p>
-        <AppButton v-if="isCompleted" type="button" variant="primary" size="lg" @click="enterWorkspace()">进入设定与分镜</AppButton>
-        <AppButton v-else type="button" variant="secondary" size="lg" @click="router.push('/projects')">返回项目列表</AppButton>
+        <p><strong>{{ isVi ? 'Bạn có thể an tâm rời trang' : '可以放心离开' }}</strong><span>{{ isVi ? 'Trạng thái và kết quả bóc tách được lưu tự động trên máy chủ, khi quay lại từ danh sách dự án bạn sẽ tiếp tục thấy tiến độ mới nhất.' : '任务状态和结果保存在后台，稍后从项目列表回来会继续显示最新进度。' }}</span></p>
+        <AppButton v-if="isCompleted" type="button" variant="primary" size="lg" @click="enterWorkspace()">{{ isVi ? 'Vào bàn làm việc kịch bản & phân cảnh' : '进入设定与分镜' }}</AppButton>
+        <AppButton v-else type="button" variant="secondary" size="lg" @click="router.push('/projects')">{{ isVi ? 'Quay lại danh sách dự án' : '返回项目列表' }}</AppButton>
       </footer>
     </div>
   </main>
