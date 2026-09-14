@@ -20,6 +20,7 @@ import {
   Volume2,
   Workflow,
 } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import AppSelect from '@/components/AppSelect.vue'
 import AssetCreateDialog from '@/components/AssetCreateDialog.vue'
 import AudioReferencePicker from '@/components/AudioReferencePicker.vue'
@@ -102,6 +103,7 @@ const terminalTaskStatuses = new Set([
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const projectId = computed(() => Number(route.params.projectId))
 const project = ref<ProjectView | null>(null)
 const chapters = ref<Chapter[]>([])
@@ -254,9 +256,9 @@ const batchVideoSceneOptions = computed<BatchVideoSceneOption[]>(() => scenes.va
   }
 }))
 const assetGroups = computed(() => [
-  { type: AssetTypeEnum.PERSON, label: '出镜角色', icon: UsersRound, items: assets.value.filter(item => item.asset_type === AssetTypeEnum.PERSON) },
-  { type: AssetTypeEnum.SCENE, label: '分镜场景', icon: ImageIcon, items: assets.value.filter(item => item.asset_type === AssetTypeEnum.SCENE) },
-  { type: AssetTypeEnum.ITEM, label: '场景道具', icon: Boxes, items: assets.value.filter(item => item.asset_type === AssetTypeEnum.ITEM) },
+  { type: AssetTypeEnum.PERSON, label: t('storyboard.groupPerson'), icon: UsersRound, items: assets.value.filter(item => item.asset_type === AssetTypeEnum.PERSON) },
+  { type: AssetTypeEnum.SCENE, label: t('storyboard.groupScene'), icon: ImageIcon, items: assets.value.filter(item => item.asset_type === AssetTypeEnum.SCENE) },
+  { type: AssetTypeEnum.ITEM, label: t('storyboard.groupProp'), icon: Boxes, items: assets.value.filter(item => item.asset_type === AssetTypeEnum.ITEM) },
 ])
 
 async function persistVideoModelPreference(modelId: number) {
@@ -1927,9 +1929,9 @@ onBeforeUnmount(() => {
         <WorkbenchCanvasIdentity :name="stripChapterOrdinal(activeChapter.name) || '未命名'" :chapter-number="activeChapter.number" :saving="savingCanvasIdentity" @rename="renameCanvas" />
       </template>
       <template #header-end>
-        <nav class="workspace-view-switch" aria-label="工作区视图切换">
-          <AppButton variant="ghost" size="sm" :active="workspaceView === 'workflow'" :aria-pressed="workspaceView === 'workflow'" @click="selectWorkspaceView('workflow')"><Workflow :size="14" />工作流</AppButton>
-          <AppButton variant="ghost" size="sm" :active="workspaceView === 'storyboard'" :aria-pressed="workspaceView === 'storyboard'" @click="selectWorkspaceView('storyboard')"><PanelsTopLeft :size="14" />故事板</AppButton>
+        <nav class="workspace-view-switch" :aria-label="$t('storyboard.viewSwitchAria')">
+          <AppButton variant="ghost" size="sm" :active="workspaceView === 'workflow'" :aria-pressed="workspaceView === 'workflow'" @click="selectWorkspaceView('workflow')"><Workflow :size="14" />{{ $t('storyboard.workflow') }}</AppButton>
+          <AppButton variant="ghost" size="sm" :active="workspaceView === 'storyboard'" :aria-pressed="workspaceView === 'storyboard'" @click="selectWorkspaceView('storyboard')"><PanelsTopLeft :size="14" />{{ $t('storyboard.storyboard') }}</AppButton>
         </nav>
       </template>
 
@@ -1944,24 +1946,24 @@ onBeforeUnmount(() => {
           @select="selectSceneById"
         />
         <header v-if="workspaceView === 'storyboard'" class="chapter-toolbar">
-          <button type="button" class="chapter-summary" :disabled="!activeChapter" aria-label="查看并编辑当前章节详情" @click="openChapterDetails">
+          <button type="button" class="chapter-summary" :disabled="!activeChapter" :aria-label="$t('storyboard.viewChapterDetails')" @click="openChapterDetails">
             <span :class="{ 'is-agent': isAgent }">{{ isAgent ? 'AGENT STORYBOARD' : 'MANUAL STORYBOARD' }}</span>
-            <h1>{{ activeChapter ? episodeDisplayLabel(activeChapter) : '分镜制作' }}</h1>
+            <h1>{{ activeChapter ? episodeDisplayLabel(activeChapter) : $t('storyboard.storyboard') }}</h1>
             <p>{{ activeChapter?.content?.slice(0, 120) }}</p>
-            <small>点击查看详情</small>
+            <small>{{ $t('storyboard.viewChapterDetails') }}</small>
           </button>
           <div class="chapter-actions">
-            <AppSelect v-model="selectedVideoModelInput" class="chapter-model-select" density="compact" ariaLabel="视频模型" :options="videoModelOptions" :menu-width="300" align="end" />
-            <AppButton v-if="isAgent" variant="secondary" size="sm" :loading="generatingStoryboard" @click="regenerateStoryboard"><Sparkles v-if="!generatingStoryboard" :size="15" />{{ generatingStoryboard ? 'Agent 生成中' : '重新生成分镜' }}</AppButton>
-            <AppButton v-if="!isAgent" variant="secondary" size="sm" type="button" :loading="creatingManualScene" @click="createManualScene()"><Plus v-if="!creatingManualScene" :size="15" />{{ creatingManualScene ? "创建中" : "创建分镜" }}</AppButton>
-            <AppButton variant="primary" size="sm" :loading="batchGeneratingVideos" @click="openBatchVideoDialog"><Clapperboard v-if="!batchGeneratingVideos" :size="15" />{{ batchGeneratingVideos ? '批量生成中' : '批量生视频' }}</AppButton>
+            <AppSelect v-model="selectedVideoModelInput" class="chapter-model-select" density="compact" :ariaLabel="$t('storyboard.videoModel')" :options="videoModelOptions" :menu-width="300" align="end" />
+            <AppButton v-if="isAgent" variant="secondary" size="sm" :loading="generatingStoryboard" @click="regenerateStoryboard"><Sparkles v-if="!generatingStoryboard" :size="15" />{{ generatingStoryboard ? $t('storyboard.generatingStoryboard') : $t('storyboard.regenerateStoryboard') }}</AppButton>
+            <AppButton v-if="!isAgent" variant="secondary" size="sm" type="button" :loading="creatingManualScene" @click="createManualScene()"><Plus v-if="!creatingManualScene" :size="15" />{{ creatingManualScene ? $t('storyboard.creatingScene') : $t('storyboard.createScene') }}</AppButton>
+            <AppButton variant="primary" size="sm" :loading="batchGeneratingVideos" data-action="批量生视频" @click="openBatchVideoDialog"><Clapperboard v-if="!batchGeneratingVideos" :size="15" />{{ batchGeneratingVideos ? $t('storyboard.batchGenerating') : $t('storyboard.batchVideo') }}</AppButton>
           </div>
         </header>
 
-        <div v-if="loading || generatingStoryboard || waitingAnalysis" class="storyboard-state"><LoaderCircle class="storyboard-state__spinner" :size="28" /><strong>{{ generatingStoryboard ? `Agent 正在生成第 ${activeChapter?.number || '-'} 集的全部分镜` : waitingAnalysis ? '项目分析尚未完成' : `正在读取第 ${activeChapter?.number || '-'} 集分镜` }}</strong><p>{{ generatingStoryboard ? '仅处理当前选中的这一集，不会自动生成其他集。' : waitingAnalysis ? 'AI 正在理解书稿并生成封面，完成后将自动生成本集分镜，请稍候…' : '正在准备本集章节、资产和视频信息。' }}</p></div>
-        <div v-else-if="generationError && !scenes.length" class="storyboard-state is-error"><Clapperboard :size="28" /><strong>暂时无法生成分镜</strong><p>{{ generationError }}</p><AppButton variant="primary" size="sm" @click="isAgent ? generateChapterStoryboard(activeChapterId) : createManualScene()">重试</AppButton></div>
-        <div v-else-if="!isAgent && !scenes.length" class="storyboard-state"><Clapperboard :size="28" /><strong>还没有分镜</strong><p>从第一个分镜开始，逐步搭建你的镜头列表。</p><AppButton variant="primary" size="sm" :loading="creatingManualScene" @click="createManualScene()"><Plus v-if="!creatingManualScene" :size="15" />{{ creatingManualScene ? "创建中" : "创建第一个分镜" }}</AppButton></div>
-        <div v-else-if="isAgent && !scenes.length" class="storyboard-state"><Clapperboard :size="28" /><strong>还没有分镜</strong><p>点击下方按钮，AI 将生成本集全部分镜。</p><AppButton variant="primary" size="sm" :loading="generatingStoryboard || waitingAnalysis" @click="waitForAnalysisThenGenerate(activeChapterId)"><Sparkles v-if="!generatingStoryboard && !waitingAnalysis" :size="15" />{{ generatingStoryboard ? 'Agent 生成中' : waitingAnalysis ? '等待项目分析' : '生成全部分镜' }}</AppButton></div>
+        <div v-if="loading || generatingStoryboard || waitingAnalysis" class="storyboard-state"><LoaderCircle class="storyboard-state__spinner" :size="28" /><strong>{{ generatingStoryboard ? $t('storyboard.agentGenerating', { number: activeChapter?.number || '-' }) : waitingAnalysis ? $t('storyboard.analyzingWait') : $t('storyboard.readingChapter', { number: activeChapter?.number || '-' }) }}</strong><p>{{ generatingStoryboard ? $t('storyboard.agentGenTip') : waitingAnalysis ? $t('storyboard.analyzingTip') : $t('storyboard.preparingTip') }}</p></div>
+        <div v-else-if="generationError && !scenes.length" class="storyboard-state is-error"><Clapperboard :size="28" /><strong>{{ $t('storyboard.cannotGenerate') }}</strong><p>{{ generationError }}</p><AppButton variant="primary" size="sm" @click="isAgent ? generateChapterStoryboard(activeChapterId) : createManualScene()">{{ $t('storyboard.retry') }}</AppButton></div>
+        <div v-else-if="!isAgent && !scenes.length" class="storyboard-state"><Clapperboard :size="28" /><strong>{{ $t('storyboard.noScenes') }}</strong><p>{{ $t('storyboard.noScenesDescManual') }}</p><AppButton variant="primary" size="sm" :loading="creatingManualScene" @click="createManualScene()"><Plus v-if="!creatingManualScene" :size="15" />{{ creatingManualScene ? $t('storyboard.creatingScene') : $t('storyboard.createFirstScene') }}</AppButton></div>
+        <div v-else-if="isAgent && !scenes.length" class="storyboard-state"><Clapperboard :size="28" /><strong>{{ $t('storyboard.noScenes') }}</strong><p>{{ $t('storyboard.noScenesDescAgent') }}</p><AppButton variant="primary" size="sm" :loading="generatingStoryboard || waitingAnalysis" @click="waitForAnalysisThenGenerate(activeChapterId)"><Sparkles v-if="!generatingStoryboard && !waitingAnalysis" :size="15" />{{ generatingStoryboard ? $t('storyboard.generatingStoryboard') : waitingAnalysis ? $t('storyboard.waitingAnalysis') : $t('storyboard.generateAllScenes') }}</AppButton></div>
         <div v-else-if="workspaceView === 'workflow'" class="workflow-canvas-shell">
           <CreativeCanvas :key="`workflow-${activeChapterId}`" :novel-id="projectId" :chapter-id="activeChapterId" :aspect-ratio="project?.aspectRatio || '9:16'" :resolution="project?.resolution || '720p'" />
         </div>
@@ -1969,23 +1971,23 @@ onBeforeUnmount(() => {
           <article v-for="scene in scenes" :id="`scene-${scene.id}`" :key="scene.id" class="shot-editor" :class="{ 'is-active': activeSceneId === scene.id }" :data-scene-id="scene.id">
             <header class="shot-editor-header">
               <div class="shot-editor-heading">
-                <GripVertical class="drag-mark" :size="16" /><strong>分镜 {{ scene.sequence }}</strong><small>ID {{ scene.id }}</small>
-                <nav aria-label="视频生成方式">
-                  <AppButton variant="soft" size="sm" :active="draftFor(scene).videoGenerationMode === 'reference'" :aria-pressed="draftFor(scene).videoGenerationMode === 'reference'" @click="setVideoGenerationMode(scene, 'reference')"><span class="mode-dot" />全能参考生视频</AppButton>
-                  <AppButton variant="soft" size="sm" :active="draftFor(scene).videoGenerationMode === 'keyframes'" :aria-pressed="draftFor(scene).videoGenerationMode === 'keyframes'" @click="setVideoGenerationMode(scene, 'keyframes')"><span class="mode-dot" />首尾帧生视频</AppButton>
+                <GripVertical class="drag-mark" :size="16" /><strong>{{ $t('storyboard.sceneLabel') }} {{ scene.sequence }}</strong><small>ID {{ scene.id }}</small>
+                <nav :aria-label="$t('storyboard.videoGenTitle')">
+                  <AppButton variant="soft" size="sm" :active="draftFor(scene).videoGenerationMode === 'reference'" :aria-pressed="draftFor(scene).videoGenerationMode === 'reference'" @click="setVideoGenerationMode(scene, 'reference')"><span class="mode-dot" />{{ $t('storyboard.allRoundReference') }}</AppButton>
+                  <AppButton variant="soft" size="sm" :active="draftFor(scene).videoGenerationMode === 'keyframes'" :aria-pressed="draftFor(scene).videoGenerationMode === 'keyframes'" @click="setVideoGenerationMode(scene, 'keyframes')"><span class="mode-dot" />{{ $t('storyboard.keyframes') }}</AppButton>
                 </nav>
               </div>
               <div>
-                <AppButton variant="ghost" size="sm" icon-only :aria-label="`在分镜 ${scene.sequence} 下方添加分镜`" title="在下方添加分镜" @click="insertSceneAfter(scene)"><Plus :size="15" /></AppButton>
-                <AppButton variant="ghost" size="sm" icon-only aria-label="复制分镜" title="复制分镜" @click="duplicateScene(scene)"><Copy :size="15" /></AppButton>
-                <AppButton variant="danger" size="sm" icon-only aria-label="删除分镜" title="删除分镜" @click="removeScene(scene)"><Trash2 :size="15" /></AppButton>
+                <AppButton variant="ghost" size="sm" icon-only :aria-label="$t('storyboard.addSceneBelow')" :title="$t('storyboard.addSceneBelow')" data-action="在下方添加分镜" @click="insertSceneAfter(scene)"><Plus :size="15" /></AppButton>
+                <AppButton variant="ghost" size="sm" icon-only :aria-label="$t('storyboard.duplicateScene')" :title="$t('storyboard.duplicateScene')" @click="duplicateScene(scene)"><Copy :size="15" /></AppButton>
+                <AppButton variant="danger" size="sm" icon-only :aria-label="$t('storyboard.deleteScene')" :title="$t('storyboard.deleteScene')" @click="removeScene(scene)"><Trash2 :size="15" /></AppButton>
               </div>
             </header>
 
             <div class="shot-editor-grid">
               <aside class="shot-info-panel">
-                <h2>分镜信息</h2>
-                <label><span>分镜描述</span><textarea :value="draftFor(scene).description" rows="5" placeholder="请输入分镜描述" @input="updateSceneText(scene, 'description', $event)" /></label>
+                <h2>{{ $t('storyboard.sceneInfo') }}</h2>
+                <label><span>{{ $t('storyboard.sceneDesc') }}</span><textarea :value="draftFor(scene).description" rows="5" :placeholder="$t('storyboard.sceneDescPlaceholder')" @input="updateSceneText(scene, 'description', $event)" /></label>
                 <section v-for="group in assetGroups" :key="group.type" class="shot-assets">
                   <header><span><component :is="group.icon" :size="15" />{{ group.label }}</span><span><small>{{ selectedAssetsFor(scene, group).length }}/{{ group.items.length }}</small><AppButton :id="`asset-picker-trigger-${assetPickerKey(scene, group.type)}`" variant="ghost" size="sm" icon-only :aria-label="`选择${group.label}及衍生状态`" @click="toggleAssetPicker(scene, group.type)"><Plus :size="15" /></AppButton></span></header>
                   <div
@@ -2054,21 +2056,21 @@ onBeforeUnmount(() => {
 
               <section class="prompt-panel" :class="{ 'has-keyframes': draftFor(scene).videoGenerationMode === 'keyframes' }">
                 <header>
-                  <div><span><strong>分镜视频生成</strong><small>组合角色、场景和动作，生成连续镜头</small></span></div>
+                  <div><span><strong>{{ $t('storyboard.videoGenTitle') }}</strong><small>{{ $t('storyboard.videoGenSubtitle') }}</small></span></div>
                   <AppButton
                     variant="ghost"
                     size="sm"
                     icon-only
                     class="prompt-focus-trigger"
-                    :aria-label="`放大编辑分镜 ${scene.sequence} 提示词`"
-                    title="专注编辑"
+                    :aria-label="$t('storyboard.focusPrompt')"
+                    :title="$t('storyboard.focusPrompt')"
                     @click="openPromptFocus(scene)"
                   ><Maximize2 :size="16" /></AppButton>
                 </header>
                 <div v-if="draftFor(scene).videoGenerationMode === 'keyframes'" class="keyframe-inputs">
-                  <label :class="{ 'has-image': draftFor(scene).firstFrameUrl }"><input type="file" accept="image/png,image/jpeg,image/webp" @change="uploadFrame(scene, 'first', $event)" /><img v-if="draftFor(scene).firstFrameUrl" :src="draftFor(scene).firstFrameUrl" alt="首帧" /><span v-else><LoaderCircle v-if="uploadingFrameKey === `${scene.id}:first`" :size="18" /><Upload v-else :size="18" /><strong>上传首帧</strong><small>视频开始画面</small></span><i>首帧</i></label>
+                  <label :class="{ 'has-image': draftFor(scene).firstFrameUrl }"><input type="file" accept="image/png,image/jpeg,image/webp" @change="uploadFrame(scene, 'first', $event)" /><img v-if="draftFor(scene).firstFrameUrl" :src="draftFor(scene).firstFrameUrl" :alt="$t('storyboard.firstFrame')" /><span v-else><LoaderCircle v-if="uploadingFrameKey === `${scene.id}:first`" :size="18" /><Upload v-else :size="18" /><strong>{{ $t('storyboard.uploadFirstFrame') }}</strong><small>{{ $t('storyboard.firstFrameDesc') }}</small></span><i>{{ $t('storyboard.firstFrame') }}</i></label>
                   <span>→</span>
-                  <label :class="{ 'has-image': draftFor(scene).lastFrameUrl }"><input type="file" accept="image/png,image/jpeg,image/webp" @change="uploadFrame(scene, 'last', $event)" /><img v-if="draftFor(scene).lastFrameUrl" :src="draftFor(scene).lastFrameUrl" alt="尾帧" /><span v-else><LoaderCircle v-if="uploadingFrameKey === `${scene.id}:last`" :size="18" /><Upload v-else :size="18" /><strong>上传尾帧</strong><small>视频结束画面</small></span><i>尾帧</i></label>
+                  <label :class="{ 'has-image': draftFor(scene).lastFrameUrl }"><input type="file" accept="image/png,image/jpeg,image/webp" @change="uploadFrame(scene, 'last', $event)" /><img v-if="draftFor(scene).lastFrameUrl" :src="draftFor(scene).lastFrameUrl" :alt="$t('storyboard.lastFrame')" /><span v-else><LoaderCircle v-if="uploadingFrameKey === `${scene.id}:last`" :size="18" /><Upload v-else :size="18" /><strong>{{ $t('storyboard.uploadLastFrame') }}</strong><small>{{ $t('storyboard.lastFrameDesc') }}</small></span><i>{{ $t('storyboard.lastFrame') }}</i></label>
                 </div>
                 <SceneReferenceMediaBar
                   :model="selectedVideoModelConfig"
@@ -2088,7 +2090,7 @@ onBeforeUnmount(() => {
                 />
                 <footer>
                   <div>
-                    <AppSelect v-model="selectedVideoModelInput" class="video-model-select" density="compact" ariaLabel="视频模型" :options="videoModelOptions" :menu-width="videoModelSelectWidth" :style="{ width: `${videoModelSelectWidth}px`, minWidth: `${videoModelSelectWidth}px` }" />
+                    <AppSelect v-model="selectedVideoModelInput" class="video-model-select" density="compact" :ariaLabel="$t('storyboard.videoModel')" :options="videoModelOptions" :menu-width="videoModelSelectWidth" :style="{ width: `${videoModelSelectWidth}px`, minWidth: `${videoModelSelectWidth}px` }" />
                     <SceneVideoParameterPicker
                       :model="selectedVideoModelConfig"
                       :mode="draftFor(scene).videoGenerationMode"
@@ -2102,12 +2104,12 @@ onBeforeUnmount(() => {
                       @update:return-last-frame="updateSceneDraft(scene, 'returnLastFrame', $event)"
                     />
                   </div>
-                  <AppButton variant="primary" size="md" aria-label="生成视频" :disabled="!canGenerateSceneVideo(scene)" :loading="generatingVideoSceneIds.has(scene.id)" @click="generateVideo(scene)"><Sparkles v-if="!generatingVideoSceneIds.has(scene.id)" :size="14" />{{ generatingVideoSceneIds.has(scene.id) ? '生成中' : '生成' }}<BillingPriceTag v-if="!generatingVideoSceneIds.has(scene.id)" :cost="sceneVideoEstimate(scene)" :pricing="selectedVideoModelConfig?.pricing" /></AppButton>
+                  <AppButton variant="primary" size="md" :aria-label="$t('storyboard.generate')" :disabled="!canGenerateSceneVideo(scene)" :loading="generatingVideoSceneIds.has(scene.id)" @click="generateVideo(scene)"><Sparkles v-if="!generatingVideoSceneIds.has(scene.id)" :size="14" />{{ generatingVideoSceneIds.has(scene.id) ? $t('storyboard.generating') : $t('storyboard.generate') }}<BillingPriceTag v-if="!generatingVideoSceneIds.has(scene.id)" :cost="sceneVideoEstimate(scene)" :pricing="selectedVideoModelConfig?.pricing" /></AppButton>
                 </footer>
               </section>
 
               <aside class="preview-panel">
-                <header><strong>视频预览</strong><RefreshCw :size="15" /></header>
+                <header><strong>{{ $t('storyboard.videoPreview') }}</strong><RefreshCw :size="15" /></header>
                 <div class="preview-stage">
                   <VideoGenerationErrorState
                     v-if="sceneVideoError(scene)"
@@ -2123,8 +2125,8 @@ onBeforeUnmount(() => {
                     :poster="videoCoverUrl(selectedVideoFor(scene)!)"
                     :title="`分镜 ${scene.sequence} 视频预览`"
                   />
-                  <div v-else-if="generatingVideoSceneIds.has(scene.id) || (selectedVideoFor(scene) && !terminalTaskStatuses.has(selectedVideoFor(scene)!.status))" class="preview-empty is-running"><LoaderCircle :size="30" /><strong>视频生成中</strong><span>完成后将在这里自动播放</span></div>
-                  <div v-else class="preview-empty"><MonitorPlay :size="32" /><strong>等待生成视频</strong><span>完善提示词后点击“生成视频”</span></div>
+                  <div v-else-if="generatingVideoSceneIds.has(scene.id) || (selectedVideoFor(scene) && !terminalTaskStatuses.has(selectedVideoFor(scene)!.status))" class="preview-empty is-running"><LoaderCircle :size="30" /><strong>{{ $t('storyboard.videoGeneratingWait') }}</strong><span>{{ $t('storyboard.videoGeneratingHint') }}</span></div>
+                  <div v-else class="preview-empty"><MonitorPlay :size="32" /><strong>{{ $t('storyboard.waitingVideo') }}</strong><span>{{ $t('storyboard.waitingVideoHint') }}</span></div>
                 </div>
                 <SceneVideoGenerationHistory
                   :records="videos[scene.id] || []"

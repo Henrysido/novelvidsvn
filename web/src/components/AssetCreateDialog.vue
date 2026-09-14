@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Boxes,
   Check,
@@ -74,30 +75,44 @@ const props = withDefaults(defineProps<{ open: boolean; kind: AssetKind; novelId
 })
 const emit = defineEmits<{ close: []; created: [asset: Asset]; saved: [asset: Asset] }>()
 
-const config = computed(() => ({
-  character: { label: '角色', icon: UserRound, type: AssetTypeEnum.PERSON, library: '角色库' },
-  scene: { label: '场景', icon: ImagePlus, type: AssetTypeEnum.SCENE, library: '场景库' },
-  prop: { label: '道具', icon: Boxes, type: AssetTypeEnum.ITEM, library: '道具库' },
-})[props.kind])
+const { locale } = useI18n()
 
-const genderOptions = [
-  { value: '', label: '请选择' },
-  { value: '男', label: '男' },
-  { value: '女', label: '女' },
-  { value: '其他（动物）', label: '其他（动物）' },
-]
-const ageOptions = [
-  { value: '', label: '请选择' },
-  { value: '儿童', label: '儿童' },
-  { value: '少年', label: '少年' },
-  { value: '青年', label: '青年' },
-  { value: '中年', label: '中年' },
-  { value: '老年', label: '老年' },
-]
-const referenceLayoutOptions = [
-  { value: 'character_turnaround', label: '单人多视图' },
-  { value: 'group_portrait', label: '人物群像' },
-]
+const config = computed(() => {
+  const isVi = locale.value === 'vi-VN'
+  return ({
+    character: { label: isVi ? 'Nhân vật' : '角色', icon: UserRound, type: AssetTypeEnum.PERSON, library: isVi ? 'Kho nhân vật' : '角色库' },
+    scene: { label: isVi ? 'Bối cảnh' : '场景', icon: ImagePlus, type: AssetTypeEnum.SCENE, library: isVi ? 'Kho bối cảnh' : '场景库' },
+    prop: { label: isVi ? 'Đạo cụ' : '道具', icon: Boxes, type: AssetTypeEnum.ITEM, library: isVi ? 'Kho đạo cụ' : '道具库' },
+  })[props.kind]
+})
+
+const genderOptions = computed(() => {
+  const isVi = locale.value === 'vi-VN'
+  return [
+    { value: '', label: isVi ? 'Vui lòng chọn' : '请选择' },
+    { value: '男', label: isVi ? 'Nam' : '男' },
+    { value: '女', label: isVi ? 'Nữ' : '女' },
+    { value: '其他（动物）', label: isVi ? 'Khác (động vật)' : '其他（动物）' },
+  ]
+})
+const ageOptions = computed(() => {
+  const isVi = locale.value === 'vi-VN'
+  return [
+    { value: '', label: isVi ? 'Vui lòng chọn' : '请选择' },
+    { value: '儿童', label: isVi ? 'Trẻ em' : '儿童' },
+    { value: '少年', label: isVi ? 'Thiếu niên' : '少年' },
+    { value: '青年', label: isVi ? 'Thanh niên' : '青年' },
+    { value: '中年', label: isVi ? 'Trung niên' : '中年' },
+    { value: '老年', label: isVi ? 'Người cao tuổi' : '老年' },
+  ]
+})
+const referenceLayoutOptions = computed(() => {
+  const isVi = locale.value === 'vi-VN'
+  return [
+    { value: 'character_turnaround', label: isVi ? 'Một người nhiều góc nhìn' : '单人多视图' },
+    { value: 'group_portrait', label: isVi ? 'Chân dung nhóm' : '人物群像' },
+  ]
+})
 
 const mode = ref<CreateMode>('ai')
 const name = ref('')
@@ -220,26 +235,40 @@ const canAnnotateCurrentImage = computed(() => Boolean(
   && !generationBusy.value,
 ))
 const generationStatusText = computed(() => {
-  if (generationError.value) return '生成失败'
-  if (!generationTask.value) return '正在提交'
+  const isVi = locale.value === 'vi-VN'
+  if (generationError.value) return isVi ? 'Tạo thất bại' : '生成失败'
+  if (!generationTask.value) return isVi ? 'Đang gửi' : '正在提交'
   return historyStatus(generationTask.value.status)
 })
 const generationStatusMessage = computed(() => {
+  const isVi = locale.value === 'vi-VN'
   if (generationError.value) return generationError.value
-  if (!generationTask.value) return '正在保存当前配置并创建生成任务…'
-  if (generationTask.value.status === TaskStatusEnum.PENDING) return '任务已提交，正在等待模型执行。'
-  if (generationTask.value.status === TaskStatusEnum.QUEUED) return '当前任务正在队列中，轮到后会自动开始。'
-  if (generationTask.value.status === TaskStatusEnum.PROCESSING) return '正在生成图像，完成后这里会自动显示最新结果。'
+  if (!generationTask.value) return isVi ? 'Đang lưu cấu hình hiện tại và tạo tác vụ…' : '正在保存当前配置并创建生成任务…'
+  if (generationTask.value.status === TaskStatusEnum.PENDING) return isVi ? 'Tác vụ đã gửi, đang chờ mô hình thực thi.' : '任务已提交，正在等待模型执行。'
+  if (generationTask.value.status === TaskStatusEnum.QUEUED) return isVi ? 'Tác vụ đang trong hàng đợi, sẽ tự động bắt đầu khi đến lượt.' : '当前任务正在队列中，轮到后会自动开始。'
+  if (generationTask.value.status === TaskStatusEnum.PROCESSING) return isVi ? 'Đang tạo hình ảnh, hoàn tất sẽ tự động hiển thị kết quả mới nhất.' : '正在生成图像，完成后这里会自动显示最新结果。'
   return ''
 })
-const historyStatus = (status: TaskStatusEnum) => ({
-  [TaskStatusEnum.PENDING]: '等待中',
-  [TaskStatusEnum.PROCESSING]: '生成中',
-  [TaskStatusEnum.COMPLETED]: '已完成',
-  [TaskStatusEnum.FAILED]: '失败',
-  [TaskStatusEnum.CANCELLED]: '已取消',
-  [TaskStatusEnum.QUEUED]: '排队中',
-}[status] || '未知')
+const historyStatus = (status: TaskStatusEnum) => {
+  if (locale.value === 'vi-VN') {
+    return ({
+      [TaskStatusEnum.PENDING]: 'Đang chờ',
+      [TaskStatusEnum.PROCESSING]: 'Đang tạo',
+      [TaskStatusEnum.COMPLETED]: 'Đã xong',
+      [TaskStatusEnum.FAILED]: 'Thất bại',
+      [TaskStatusEnum.CANCELLED]: 'Đã hủy',
+      [TaskStatusEnum.QUEUED]: 'Đang xếp hàng',
+    }[status] || 'Không rõ')
+  }
+  return ({
+    [TaskStatusEnum.PENDING]: '等待中',
+    [TaskStatusEnum.PROCESSING]: '生成中',
+    [TaskStatusEnum.COMPLETED]: '已完成',
+    [TaskStatusEnum.FAILED]: '失败',
+    [TaskStatusEnum.CANCELLED]: '已取消',
+    [TaskStatusEnum.QUEUED]: '排队中',
+  }[status] || '未知')
+}
 
 const modelOptions = computed(() => models.value.map(item => ({ value: String(item.config_id), label: item.name || item.model || `生图模型 ${item.config_id}` })))
 const selectedModel = computed(() => models.value.find(item => String(item.config_id) === modelId.value) || null)
@@ -257,9 +286,13 @@ const selectedLibrary = computed(() => libraryItems.value.find(item => item.key 
 const publicHasMore = computed(() => props.kind === 'character' && publicPage.value < publicPages.value)
 const projectHasMore = computed(() => projectPage.value < projectPages.value)
 const isGroupPortrait = computed(() => props.kind === 'character' && referenceLayout.value === 'group_portrait')
-const promptPlaceholder = computed(() => isGroupPortrait.value
-  ? '描述群像中的人物、各自固定特征、服装与人物关系'
-  : `描述${config.value.label}的外观、材质、光影和视角要求`)
+const promptPlaceholder = computed(() => {
+  const isVi = locale.value === 'vi-VN'
+  if (isGroupPortrait.value) {
+    return isVi ? 'Mô tả các nhân vật trong chân dung nhóm, đặc điểm cố định, trang phục và quan hệ nhân vật' : '描述群像中的人物、各自固定特征、服装与人物关系'
+  }
+  return isVi ? `Mô tả ngoại hình, chất liệu, ánh sáng và yêu cầu góc nhìn của ${config.value.label}` : `描述${config.value.label}的外观、材质、光影和视角要求`
+})
 const libraryHasMore = computed(() => {
   if (libraryScope.value === 'public') return publicHasMore.value
   if (libraryScope.value === 'project') return projectHasMore.value
@@ -1223,23 +1256,23 @@ onUnmounted(() => {
       <form v-if="open" class="asset-dialog" role="dialog" aria-modal="true" aria-labelledby="asset-dialog-title" @submit.prevent="submit(false)">
         <header class="asset-dialog__header">
           <span class="asset-dialog__icon"><component :is="config.icon" :size="18" /></span>
-          <div><span>PROJECT ASSET</span><h2 id="asset-dialog-title">{{ isEditing ? '编辑' : '新增' }}{{ config.label }}</h2></div>
-          <AppButton type="button" variant="ghost" size="sm" icon-only aria-label="关闭" @click="emit('close')"><X :size="18" /></AppButton>
+          <div><span>PROJECT ASSET</span><h2 id="asset-dialog-title">{{ isEditing ? (locale === 'vi-VN' ? 'Sửa ' : '编辑') : (locale === 'vi-VN' ? 'Thêm ' : '新增') }}{{ config.label }}</h2></div>
+          <AppButton type="button" variant="ghost" size="sm" icon-only :aria-label="$t('common.close')" @click="emit('close')"><X :size="18" /></AppButton>
         </header>
 
         <div class="asset-dialog__body">
-          <section v-if="isEditing || generatedImage" class="asset-generated-preview" aria-label="当前图片">
+          <section v-if="isEditing || generatedImage" class="asset-generated-preview" :aria-label="locale === 'vi-VN' ? 'Hình ảnh hiện tại' : '当前图片'">
             <header>
-              <strong>当前图片 · {{ currentImageName }}</strong>
+              <strong>{{ locale === 'vi-VN' ? 'Ảnh hiện tại · ' : '当前图片 · ' }}{{ currentImageName }}</strong>
               <span v-if="generationBusy || generationError" class="asset-generated-preview__status" :class="{ 'is-error': generationError }">
                 <i aria-hidden="true" />{{ generationStatusText }}
               </span>
-              <span v-else>{{ generatedImage ? imageInfoLabel(generatedImage, currentImageFormat) : '尚未生成' }}</span>
+              <span v-else>{{ generatedImage ? imageInfoLabel(generatedImage, currentImageFormat) : (locale === 'vi-VN' ? 'Chưa tạo' : '尚未生成') }}</span>
             </header>
             <div v-if="generatedImage" class="asset-generated-preview__canvas">
-              <button type="button" class="asset-generated-preview__viewer" :class="{ 'is-generating': generationBusy }" aria-label="放大查看当前图片" @click="openImageLightbox(generatedImage, `${currentImageName}的生成图片`, currentImageFormat)">
+              <button type="button" class="asset-generated-preview__viewer" :class="{ 'is-generating': generationBusy }" :aria-label="locale === 'vi-VN' ? 'Xem phóng to ảnh hiện tại' : '放大查看当前图片'" @click="openImageLightbox(generatedImage, `${currentImageName}的生成图片`, currentImageFormat)">
                 <img :src="generatedImagePreview" :alt="`${currentImageName}的生成图片`" />
-                <span class="asset-generated-preview__zoom"><Maximize2 :size="15" />放大查看</span>
+                <span class="asset-generated-preview__zoom"><Maximize2 :size="15" />{{ locale === 'vi-VN' ? 'Xem phóng to' : '放大查看' }}</span>
                 <span v-if="generationBusy" class="asset-generated-preview__overlay" aria-hidden="true">
                   <i><LoaderCircle :size="25" /></i>
                 </span>
@@ -1251,8 +1284,8 @@ onUnmounted(() => {
                 size="sm"
                 icon-only
                 class="asset-generated-preview__edit"
-                aria-label="编辑当前图片标注"
-                title="编辑图片"
+                :aria-label="locale === 'vi-VN' ? 'Chỉnh sửa chú thích ảnh hiện tại' : '编辑当前图片标注'"
+                :title="locale === 'vi-VN' ? 'Sửa ảnh' : '编辑图片'"
                 @click="openAnnotationEditor"
               ><Pencil :size="15" /></AppButton>
             </div>
@@ -1261,7 +1294,7 @@ onUnmounted(() => {
               <strong>{{ generationStatusText }}</strong>
               <span>{{ generationStatusMessage }}</span>
             </div>
-            <div v-else class="asset-generated-preview__empty" role="status"><ImagePlus :size="30" /><strong>暂无图片</strong><span>可以上传或生成该衍生形象</span></div>
+            <div v-else class="asset-generated-preview__empty" role="status"><ImagePlus :size="30" /><strong>{{ locale === 'vi-VN' ? 'Chưa có hình ảnh' : '暂无图片' }}</strong><span>{{ locale === 'vi-VN' ? 'Có thể tải lên hoặc tạo biến thể hình ảnh này' : '可以上传或生成该衍生形象' }}</span></div>
             <Transition name="asset-generation-status">
               <div v-if="(generationBusy && generatedImage) || generationError" class="asset-generation-status" :class="{ 'is-error': generationError }" role="status" aria-live="polite">
                 <span><LoaderCircle v-if="!generationError" :size="17" /><CircleAlert v-else :size="17" /></span>
@@ -1272,11 +1305,11 @@ onUnmounted(() => {
 
           <section v-if="isEditing" class="asset-generation-history" aria-labelledby="asset-history-title">
             <header>
-              <div><Clock3 :size="15" /><strong id="asset-history-title">生成记录</strong><span>{{ visibleGenerationHistory.length }} 次</span></div>
-              <AppButton type="button" variant="ghost" size="xs" icon-only aria-label="刷新生成记录" title="刷新生成记录" :loading="loadingHistory" @click="loadGenerationHistory"><RefreshCw v-if="!loadingHistory" :size="14" /></AppButton>
+              <div><Clock3 :size="15" /><strong id="asset-history-title">{{ locale === 'vi-VN' ? 'Lịch sử tạo' : '生成记录' }}</strong><span>{{ visibleGenerationHistory.length }}{{ locale === 'vi-VN' ? ' lần' : ' 次' }}</span></div>
+              <AppButton type="button" variant="ghost" size="xs" icon-only :aria-label="locale === 'vi-VN' ? 'Làm mới lịch sử tạo' : '刷新生成记录'" :title="locale === 'vi-VN' ? 'Làm mới lịch sử tạo' : '刷新生成记录'" :loading="loadingHistory" @click="loadGenerationHistory"><RefreshCw v-if="!loadingHistory" :size="14" /></AppButton>
             </header>
-            <div v-if="loadingHistory && !generationHistory.length" class="asset-generation-history__state">正在加载生成记录…</div>
-            <div v-else-if="!visibleGenerationHistory.length" class="asset-generation-history__state">暂无其他生成记录</div>
+            <div v-if="loadingHistory && !generationHistory.length" class="asset-generation-history__state">{{ locale === 'vi-VN' ? 'Đang tải lịch sử tạo…' : '正在加载生成记录…' }}</div>
+            <div v-else-if="!visibleGenerationHistory.length" class="asset-generation-history__state">{{ locale === 'vi-VN' ? 'Chưa có lịch sử tạo khác' : '暂无其他生成记录' }}</div>
             <div v-else class="asset-generation-history__list">
               <article v-for="record in visibleGenerationHistory" :key="record.id" :class="`is-status-${record.status}`">
                 <button v-if="record.images[0]" type="button" class="asset-generation-history__image" :aria-label="`放大查看${formatHistoryTime(record.created_at)}的生成图片`" @click="openImageLightbox(record.images[0], `${name}的历史生成图片`, record.output_format)">
@@ -1287,17 +1320,17 @@ onUnmounted(() => {
                 <div>
                   <strong>{{ historyStatus(record.status) }}</strong>
                   <small>{{ formatHistoryTime(record.created_at) }}</small>
-                  <p>{{ [record.model, record.aspect_ratio, record.clarity, record.output_format?.toUpperCase()].filter(Boolean).join(' / ') || '使用当前模型配置' }}</p>
+                  <p>{{ [record.model, record.aspect_ratio, record.clarity, record.output_format?.toUpperCase()].filter(Boolean).join(' / ') || (locale === 'vi-VN' ? 'Dùng cấu hình mô hình hiện tại' : '使用当前模型配置') }}</p>
                   <div v-if="record.error_message" class="asset-generation-history__error">
                     <span>{{ summarizedError(record.error_message) }}</span>
                     <button
                       v-if="isLongError(record.error_message)"
                       type="button"
                       :aria-expanded="selectedErrorRecordId === record.id"
-                      :aria-label="`查看${formatHistoryTime(record.created_at)}的失败详情`"
+                      :aria-label="locale === 'vi-VN' ? `Xem chi tiết thất bại của ${formatHistoryTime(record.created_at)}` : `查看${formatHistoryTime(record.created_at)}的失败详情`"
                       @click="toggleHistoryError(record.id)"
                     >
-                      查看详情<ChevronDown :size="12" />
+                      {{ locale === 'vi-VN' ? 'Xem chi tiết' : '查看详情' }}<ChevronDown :size="12" />
                     </button>
                   </div>
                   <AppButton
@@ -1311,21 +1344,21 @@ onUnmounted(() => {
                     @click="restoreGeneration(record)"
                   >
                     <Undo2 v-if="restoringRecordId !== record.id" :size="12" />
-                    设为当前
+                    {{ locale === 'vi-VN' ? 'Đặt làm hiện tại' : '设为当前' }}
                   </AppButton>
                 </div>
               </article>
             </div>
             <Transition name="asset-error-detail">
-              <section v-if="selectedErrorRecord?.error_message" class="asset-generation-error-detail" role="region" aria-label="生成失败详情">
+              <section v-if="selectedErrorRecord?.error_message" class="asset-generation-error-detail" role="region" :aria-label="locale === 'vi-VN' ? 'Chi tiết lỗi tạo' : '生成失败详情'">
                 <header>
                   <div>
-                    <strong>失败详情</strong>
+                    <strong>{{ locale === 'vi-VN' ? 'Chi tiết thất bại' : '失败详情' }}</strong>
                     <span>{{ formatHistoryTime(selectedErrorRecord.created_at) }}</span>
                   </div>
-                  <AppButton type="button" variant="ghost" size="xs" icon-only aria-label="关闭失败详情" @click="selectedErrorRecordId = ''"><X :size="13" /></AppButton>
+                  <AppButton type="button" variant="ghost" size="xs" icon-only :aria-label="locale === 'vi-VN' ? 'Đóng chi tiết thất bại' : '关闭失败详情'" @click="selectedErrorRecordId = ''"><X :size="13" /></AppButton>
                 </header>
-                <small>{{ [selectedErrorRecord.model, selectedErrorRecord.aspect_ratio, selectedErrorRecord.clarity, selectedErrorRecord.output_format?.toUpperCase()].filter(Boolean).join(' / ') || '使用当前模型配置' }}</small>
+                <small>{{ [selectedErrorRecord.model, selectedErrorRecord.aspect_ratio, selectedErrorRecord.clarity, selectedErrorRecord.output_format?.toUpperCase()].filter(Boolean).join(' / ') || (locale === 'vi-VN' ? 'Dùng cấu hình mô hình hiện tại' : '使用当前模型配置') }}</small>
                 <pre>{{ selectedErrorRecord.error_message }}</pre>
               </section>
             </Transition>
@@ -1343,26 +1376,26 @@ onUnmounted(() => {
           />
 
           <div class="asset-form-grid" :class="{ 'is-character': kind === 'character' && !isGroupPortrait }">
-            <label class="asset-field"><span><i>*</i>名称</span><input v-model="name" maxlength="100" placeholder="请输入" /></label>
-            <label v-if="kind === 'character' && !isGroupPortrait" class="asset-field"><span><i>*</i>性别</span><AppSelect v-model="gender" :options="genderOptions" ariaLabel="选择性别" menu-label="性别" /></label>
-            <label v-if="kind === 'character' && !isGroupPortrait" class="asset-field"><span><i>*</i>年龄</span><AppSelect v-model="age" :options="ageOptions" ariaLabel="选择年龄阶段" menu-label="年龄" /></label>
-            <label v-if="kind === 'character' && !isGroupPortrait" class="asset-field"><span>音色选择</span><AppButton type="button" variant="secondary" block :loading="voiceSaving" :disabled="voiceSaving" @click="voicePickerOpen = true"><Volume2 :size="15" />{{ voice || '选择音色' }}</AppButton></label>
+            <label class="asset-field"><span><i>*</i>{{ locale === 'vi-VN' ? 'Tên' : '名称' }}</span><input v-model="name" maxlength="100" :placeholder="locale === 'vi-VN' ? 'Vui lòng nhập' : '请输入'" /></label>
+            <label v-if="kind === 'character' && !isGroupPortrait" class="asset-field"><span><i>*</i>{{ locale === 'vi-VN' ? 'Giới tính' : '性别' }}</span><AppSelect v-model="gender" :options="genderOptions" ariaLabel="选择性别" :menu-label="locale === 'vi-VN' ? 'Giới tính' : '性别'" /></label>
+            <label v-if="kind === 'character' && !isGroupPortrait" class="asset-field"><span><i>*</i>{{ locale === 'vi-VN' ? 'Độ tuổi' : '年龄' }}</span><AppSelect v-model="age" :options="ageOptions" ariaLabel="选择年龄阶段" :menu-label="locale === 'vi-VN' ? 'Độ tuổi' : '年龄'" /></label>
+            <label v-if="kind === 'character' && !isGroupPortrait" class="asset-field"><span>{{ locale === 'vi-VN' ? 'Chọn giọng đọc' : '音色选择' }}</span><AppButton type="button" variant="secondary" block :loading="voiceSaving" :disabled="voiceSaving" @click="voicePickerOpen = true"><Volume2 :size="15" />{{ voice || (locale === 'vi-VN' ? 'Chọn giọng đọc' : '选择音色') }}</AppButton></label>
           </div>
 
           <fieldset class="asset-mode">
-            <legend><i>*</i>形象生成方式</legend>
+            <legend><i>*</i>{{ locale === 'vi-VN' ? 'Phương thức tạo hình ảnh' : '形象生成方式' }}</legend>
             <div>
-              <AppButton type="button" variant="ghost" :active="mode === 'ai'" @click="mode = 'ai'"><Sparkles :size="15" />AI 生成</AppButton>
-              <AppButton type="button" variant="ghost" :active="mode === 'library'" @click="mode = 'library'"><Library :size="15" />从{{ config.library }}选择</AppButton>
-              <AppButton type="button" variant="ghost" :active="mode === 'upload'" @click="mode = 'upload'"><Upload :size="15" />本地上传</AppButton>
+              <AppButton type="button" variant="ghost" :active="mode === 'ai'" @click="mode = 'ai'"><Sparkles :size="15" />{{ locale === 'vi-VN' ? 'AI Tạo ảnh' : 'AI 生成' }}</AppButton>
+              <AppButton type="button" variant="ghost" :active="mode === 'library'" @click="mode = 'library'"><Library :size="15" />{{ locale === 'vi-VN' ? 'Chọn từ ' + config.library : '从' + config.library + '选择' }}</AppButton>
+              <AppButton type="button" variant="ghost" :active="mode === 'upload'" @click="mode = 'upload'"><Upload :size="15" />{{ locale === 'vi-VN' ? 'Tải lên từ máy' : '本地上传' }}</AppButton>
             </div>
           </fieldset>
 
           <template v-if="mode === 'ai'">
-            <label v-if="kind === 'character'" class="asset-field"><span>参考图版式</span><AppSelect v-model="referenceLayout" :options="referenceLayoutOptions" ariaLabel="选择人物参考图版式" menu-label="参考图版式" /></label>
+            <label v-if="kind === 'character'" class="asset-field"><span>{{ locale === 'vi-VN' ? 'Bố cục ảnh tham chiếu' : '参考图版式' }}</span><AppSelect v-model="referenceLayout" :options="referenceLayoutOptions" ariaLabel="选择人物参考图版式" :menu-label="locale === 'vi-VN' ? 'Bố cục ảnh tham chiếu' : '参考图版式'" /></label>
             <section class="asset-reference-input" aria-labelledby="asset-reference-input-title">
               <header>
-                <div><strong id="asset-reference-input-title">图生图参考图片</strong><small>可选 · 最多 10 张</small></div>
+                <div><strong id="asset-reference-input-title">{{ locale === 'vi-VN' ? 'Ảnh tham chiếu (Image to Image)' : '图生图参考图片' }}</strong><small>{{ locale === 'vi-VN' ? 'Tùy chọn · Tối đa 10 ảnh' : '可选 · 最多 10 张' }}</small></div>
                 <span>{{ referenceImagePreviews.length }}/10</span>
               </header>
               <div class="asset-reference-input__grid">
@@ -1373,36 +1406,36 @@ onUnmounted(() => {
                 <label v-if="referenceImagePreviews.length < 10" class="asset-reference-input__add">
                   <input type="file" multiple accept="image/jpeg,image/png" @change="onReferenceFileInput" />
                   <ImagePlus :size="20" />
-                  <span>添加参考图</span>
+                  <span>{{ locale === 'vi-VN' ? 'Thêm ảnh tham chiếu' : '添加参考图' }}</span>
                 </label>
               </div>
-              <p>生成时会参考主体、服装或画面风格；JPG/PNG，单张不超过 15MB。</p>
+              <p>{{ locale === 'vi-VN' ? 'Khi tạo sẽ tham chiếu nhân vật, trang phục hoặc phong cách hình ảnh; JPG/PNG, mỗi ảnh không quá 15MB.' : '生成时会参考主体、服装或画面风格；JPG/PNG，单张不超过 15MB。' }}</p>
             </section>
             <label class="asset-field">
-              <span><i>*</i>提示词<small v-if="isEditing">最终发送 · {{ promptLanguage === 'zh' ? '中文' : 'English' }}</small></span>
+              <span><i>*</i>{{ locale === 'vi-VN' ? 'Lời nhắc (Prompt)' : '提示词' }}<small v-if="isEditing">{{ locale === 'vi-VN' ? 'Gửi đi · ' : '最终发送 · ' }}{{ promptLanguage === 'zh' ? (locale === 'vi-VN' ? 'Tiếng Trung' : '中文') : 'English' }}</small></span>
               <textarea v-model="prompt" rows="8" :placeholder="promptPlaceholder" @input="promptTouched = true" />
             </label>
           </template>
 
           <section v-else-if="mode === 'library'" class="asset-library">
             <header>
-              <label><Search :size="16" /><input v-model="search" type="search" :placeholder="`搜索${config.library}`" /></label>
+              <label><Search :size="16" /><input v-model="search" type="search" :placeholder="locale === 'vi-VN' ? 'Tìm kiếm ' + config.library : `搜索${config.library}`" /></label>
               <nav v-if="kind === 'character'">
-                <AppButton v-for="item in [{ value: 'all', label: '全部' }, { value: 'public', label: '公共数字人' }, { value: 'project', label: '项目人物' }]" :key="item.value" type="button" variant="soft" size="sm" :active="libraryScope === item.value" @click="libraryScope = item.value as 'all' | 'public' | 'project'">{{ item.label }}</AppButton>
+                <AppButton v-for="item in [{ value: 'all', label: locale === 'vi-VN' ? 'Tất cả' : '全部' }, { value: 'public', label: locale === 'vi-VN' ? 'Người ảo công khai' : '公共数字人' }, { value: 'project', label: locale === 'vi-VN' ? 'Nhân vật dự án' : '项目人物' }]" :key="item.value" type="button" variant="soft" size="sm" :active="libraryScope === item.value" @click="libraryScope = item.value as 'all' | 'public' | 'project'">{{ item.label }}</AppButton>
               </nav>
             </header>
             <div class="asset-library__grid" @scroll.passive="onLibraryScroll">
-              <div v-if="loadingLibrary" class="asset-library__state">正在加载资产库…</div>
+              <div v-if="loadingLibrary" class="asset-library__state">{{ locale === 'vi-VN' ? 'Đang tải kho tài nguyên…' : '正在加载资产库…' }}</div>
               <AppButton v-for="item in filteredLibraryItems" v-else :key="item.key" type="button" class="asset-library__card" :active="selectedLibraryKey === item.key" @click="selectedLibraryKey = item.key">
                 <img :src="imageDerivativeUrl(item.image)" alt="" loading="lazy" decoding="async" />
                 <span><strong>{{ item.name }}</strong><small>{{ item.detail }}</small></span>
                 <Check v-if="selectedLibraryKey === item.key" :size="16" />
               </AppButton>
-              <div v-if="!loadingLibrary && !filteredLibraryItems.length" class="asset-library__state">暂无可用{{ config.label }}资产</div>
+              <div v-if="!loadingLibrary && !filteredLibraryItems.length" class="asset-library__state">{{ locale === 'vi-VN' ? 'Chưa có tài nguyên ' + config.label + ' khả dụng' : '暂无可用' + config.label + '资产' }}</div>
               <div v-if="!loadingLibrary && filteredLibraryItems.length" class="asset-library__paging" role="status" aria-live="polite">
-                <template v-if="loadingMoreLibrary"><LoaderCircle :size="15" />正在加载下一页…</template>
-                <template v-else-if="libraryHasMore">继续下滑加载更多</template>
-                <template v-else>已加载全部</template>
+                <template v-if="loadingMoreLibrary"><LoaderCircle :size="15" />{{ locale === 'vi-VN' ? 'Đang tải trang tiếp…' : '正在加载下一页…' }}</template>
+                <template v-else-if="libraryHasMore">{{ locale === 'vi-VN' ? 'Cuộn xuống để tải thêm' : '继续下滑加载更多' }}</template>
+                <template v-else>{{ locale === 'vi-VN' ? 'Đã tải toàn bộ' : '已加载全部' }}</template>
               </div>
             </div>
           </section>
@@ -1410,10 +1443,10 @@ onUnmounted(() => {
           <label v-else class="asset-upload" :class="{ 'is-dragging': dragging, 'has-file': uploadPreview }" @dragenter.prevent="dragging = true" @dragover.prevent @dragleave.prevent="dragging = false" @drop.prevent="onDrop">
             <input type="file" accept="image/jpeg,image/png" @change="acceptFile(($event.target as HTMLInputElement).files?.[0])" />
             <img v-if="uploadPreview" :src="uploadPreview" alt="上传预览" />
-            <template v-else><Upload :size="26" /><strong>点击或拖拽图片到此处上传</strong><span>仅支持 JPG、PNG，最大 20MB</span></template>
+            <template v-else><Upload :size="26" /><strong>{{ locale === 'vi-VN' ? 'Nhấp hoặc kéo thả ảnh vào đây để tải lên' : '点击或拖拽图片到此处上传' }}</strong><span>{{ locale === 'vi-VN' ? 'Chỉ hỗ trợ JPG, PNG, tối đa 20MB' : '仅支持 JPG、PNG，最大 20MB' }}</span></template>
           </label>
 
-          <label class="asset-field"><span>{{ config.label }}描述</span><textarea v-model="description" rows="3" placeholder="请输入" /></label>
+          <label class="asset-field"><span>{{ locale === 'vi-VN' ? 'Mô tả ' + config.label : config.label + '描述' }}</span><textarea v-model="description" rows="3" :placeholder="locale === 'vi-VN' ? 'Vui lòng nhập' : '请输入'" /></label>
         </div>
 
         <footer class="asset-dialog__footer">
@@ -1423,9 +1456,9 @@ onUnmounted(() => {
           </div>
           <span v-else />
           <div>
-            <AppButton type="button" variant="secondary" @click="emit('close')">取消</AppButton>
-            <AppButton v-if="isEditing && mode === 'ai'" type="button" variant="primary" :disabled="!canSubmit || generationBusy" :loading="generationBusy" @click="submit(true)"><RefreshCw v-if="!generationBusy" :size="15" />{{ generationBusy ? generationStatusText : '生成图片' }}<BillingPriceTag v-if="!generationBusy" :cost="estimatedCost" :pricing="selectedModel?.pricing" /></AppButton>
-            <AppButton v-else type="submit" variant="primary" :disabled="!canSubmit || generationBusy" :loading="saving && !generationRequested"><Sparkles v-if="!isEditing && !saving && mode === 'ai'" :size="15" />{{ variantContextActive ? mode === 'upload' ? '上传并保存' : mode === 'library' ? '选择并保存' : '保存此版本' : isEditing ? '保存修改' : mode === 'ai' ? '开始生成' : '确认添加' }}<BillingPriceTag v-if="!isEditing && mode === 'ai' && !saving" :cost="estimatedCost" :pricing="selectedModel?.pricing" /></AppButton>
+            <AppButton type="button" variant="secondary" @click="emit('close')">{{ $t('common.cancel') }}</AppButton>
+            <AppButton v-if="isEditing && mode === 'ai'" type="button" variant="primary" :disabled="!canSubmit || generationBusy" :loading="generationBusy" @click="submit(true)"><RefreshCw v-if="!generationBusy" :size="15" />{{ generationBusy ? generationStatusText : (locale === 'vi-VN' ? 'Tạo hình ảnh' : '生成图片') }}<BillingPriceTag v-if="!generationBusy" :cost="estimatedCost" :pricing="selectedModel?.pricing" /></AppButton>
+            <AppButton v-else type="submit" variant="primary" :disabled="!canSubmit || generationBusy" :loading="saving && !generationRequested"><Sparkles v-if="!isEditing && !saving && mode === 'ai'" :size="15" />{{ variantContextActive ? mode === 'upload' ? (locale === 'vi-VN' ? 'Tải lên & lưu' : '上传并保存') : mode === 'library' ? (locale === 'vi-VN' ? 'Chọn & lưu' : '选择并保存') : (locale === 'vi-VN' ? 'Lưu phiên bản này' : '保存此版本') : isEditing ? (locale === 'vi-VN' ? 'Lưu thay đổi' : '保存修改') : mode === 'ai' ? (locale === 'vi-VN' ? 'Bắt đầu tạo' : '开始生成') : (locale === 'vi-VN' ? 'Xác nhận thêm' : '确认添加') }}<BillingPriceTag v-if="!isEditing && mode === 'ai' && !saving" :cost="estimatedCost" :pricing="selectedModel?.pricing" /></AppButton>
           </div>
         </footer>
       </form>

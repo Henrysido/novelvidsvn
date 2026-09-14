@@ -17,6 +17,7 @@ import {
   Upload,
   UsersRound,
 } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import AppBadge from '@/components/AppBadge.vue'
 import AssetCreateDialog from '@/components/AssetCreateDialog.vue'
 import AssetBatchGenerateDialog from '@/components/AssetBatchGenerateDialog.vue'
@@ -58,6 +59,7 @@ function readProjectMeta(): ManualProjectMeta {
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 const projectId = computed(() => Number(route.params.projectId))
 const selectedChapterId = computed(() => Number(route.query.chapter))
 const project = ref(readProjectMeta())
@@ -95,13 +97,13 @@ const terminalTaskStatuses = new Set([
   TaskStatusEnum.CANCELLED,
 ])
 
-const tabs = [
-  { value: 'character' as const, label: '角色', icon: UsersRound, type: AssetTypeEnum.PERSON },
-  { value: 'scene' as const, label: '场景', icon: ImagePlus, type: AssetTypeEnum.SCENE },
-  { value: 'prop' as const, label: '道具', icon: Boxes, type: AssetTypeEnum.ITEM },
-]
+const tabs = computed(() => [
+  { value: 'character' as const, label: t('manualWorkspace.tabCharacter'), icon: UsersRound, type: AssetTypeEnum.PERSON },
+  { value: 'scene' as const, label: t('manualWorkspace.tabScene'), icon: ImagePlus, type: AssetTypeEnum.SCENE },
+  { value: 'prop' as const, label: t('manualWorkspace.tabProp'), icon: Boxes, type: AssetTypeEnum.ITEM },
+])
 
-const activeTabConfig = computed(() => tabs.find(item => item.value === activeTab.value) ?? tabs[0])
+const activeTabConfig = computed(() => tabs.value.find(item => item.value === activeTab.value) ?? tabs.value[0])
 const visibleAssets = computed(() => assets.value.filter(item => item.asset_type === activeTabConfig.value.type))
 const completedCount = computed(() => visibleAssets.value.filter(item => item.main_image).length)
 const generatingCount = computed(() => visibleAssets.value.filter(item => generatingAssetIds.value.has(item.id)).length)
@@ -648,8 +650,8 @@ onBeforeUnmount(() => {
         <div class="asset-summary">
           <span v-if="project.creationMode === 'agent'" class="chapter-context"><BookOpenText :size="13" />{{ selectedChapter ? `当前第 ${selectedChapter.number} 章` : '未选择章节' }}</span>
           <div v-if="project.creationMode === 'agent' && selectedChapter" class="asset-scope-switch" role="group" aria-label="资产范围">
-            <AppButton type="button" variant="ghost" size="xs" :active="assetScope === 'project'" @click="setAssetScope('project')">全部项目</AppButton>
-            <AppButton type="button" variant="ghost" size="xs" :active="assetScope === 'chapter'" @click="setAssetScope('chapter')">当前章节</AppButton>
+            <AppButton type="button" variant="ghost" size="xs" :active="assetScope === 'project'" @click="setAssetScope('project')">{{ locale === 'vi-VN' ? 'Tất cả dự án' : '全部项目' }}</AppButton>
+            <AppButton type="button" variant="ghost" size="xs" :active="assetScope === 'chapter'" @click="setAssetScope('chapter')">{{ locale === 'vi-VN' ? 'Tập hiện tại' : '当前章节' }}</AppButton>
           </div>
           <AppButton
             v-if="project.creationMode === 'agent'"
@@ -663,17 +665,17 @@ onBeforeUnmount(() => {
             @click="extractSelectedChapterAssets"
           >
             <Boxes v-if="!extractionBusy" :size="15" />
-            {{ extractionBusy ? '正在提取本章' : '提取本章资产' }}
+            {{ extractionBusy ? (locale === 'vi-VN' ? 'Đang trích xuất…' : '正在提取本章') : (locale === 'vi-VN' ? 'Trích xuất tài nguyên tập này' : '提取本章资产') }}
           </AppButton>
           <i v-if="project.creationMode === 'agent'" />
-          <span>{{ activeTabConfig.label }}总计 <strong>{{ visibleAssets.length }}</strong></span>
+          <span>{{ activeTabConfig.label }}{{ locale === 'vi-VN' ? ' tổng cộng' : '总计' }} <strong>{{ visibleAssets.length }}</strong></span>
           <i />
-          <span><Check :size="13" />已完成 {{ completedCount }}</span>
-          <span><i v-if="generatingCount" class="generating-summary-dot" />生成中 {{ generatingCount }}</span>
-          <span>失败 {{ failedCount }}</span>
-          <AppButton type="button" variant="secondary" size="sm" icon-only aria-label="刷新" @click="refreshAssets"><RefreshCw :size="14" /></AppButton>
-          <AppButton type="button" variant="primary" size="sm" @click="openAssetDialog()"><Plus :size="15" />添加{{ activeTabConfig.label }}</AppButton>
-          <AppButton type="button" variant="soft" size="sm" :loading="batchGenerating" :disabled="batchGenerating" @click="assets.length ? showBatchDialog = true : notice.info('请先添加角色、场景或道具资产')"><Layers3 v-if="!batchGenerating" :size="15" />{{ batchGenerating ? '批量生成中' : '批量生成' }}</AppButton>
+          <span><Check :size="13" />{{ locale === 'vi-VN' ? 'Đã xong' : '已完成' }} {{ completedCount }}</span>
+          <span><i v-if="generatingCount" class="generating-summary-dot" />{{ locale === 'vi-VN' ? 'Đang tạo' : '生成中' }} {{ generatingCount }}</span>
+          <span>{{ locale === 'vi-VN' ? 'Thất bại' : '失败' }} {{ failedCount }}</span>
+          <AppButton type="button" variant="secondary" size="sm" icon-only :aria-label="$t('common.refresh')" @click="refreshAssets"><RefreshCw :size="14" /></AppButton>
+          <AppButton type="button" variant="primary" size="sm" @click="openAssetDialog()"><Plus :size="15" />{{ locale === 'vi-VN' ? 'Thêm ' + activeTabConfig.label : '添加' + activeTabConfig.label }}</AppButton>
+          <AppButton type="button" variant="soft" size="sm" :loading="batchGenerating" :disabled="batchGenerating" @click="assets.length ? showBatchDialog = true : notice.info(locale === 'vi-VN' ? 'Vui lòng thêm nhân vật, bối cảnh hoặc đạo cụ trước' : '请先添加角色、场景或道具资产')"><Layers3 v-if="!batchGenerating" :size="15" />{{ batchGenerating ? (locale === 'vi-VN' ? 'Đang tạo hàng loạt…' : '批量生成中') : (locale === 'vi-VN' ? 'Tạo hàng loạt' : '批量生成') }}</AppButton>
         </div>
       </header>
 
@@ -695,12 +697,12 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div v-if="loading" class="workspace-state"><RefreshCw class="is-spinning" :size="28" /><span>正在加载项目…</span></div>
+      <div v-if="loading" class="workspace-state"><RefreshCw class="is-spinning" :size="28" /><span>{{ $t('common.loading') }}</span></div>
       <div v-else-if="!visibleAssets.length" class="workspace-state empty-state">
         <span class="empty-icon"><component :is="activeTabConfig.icon" :size="32" /></span>
-        <strong>暂无{{ activeTabConfig.label }}</strong>
-        <p>添加第一个{{ activeTabConfig.label }}，开始搭建你的短剧世界。</p>
-        <AppButton type="button" variant="primary" size="sm" @click="openAssetDialog()"><Plus :size="15" />添加{{ activeTabConfig.label }}</AppButton>
+        <strong>{{ locale === 'vi-VN' ? 'Chưa có ' + activeTabConfig.label : '暂无' + activeTabConfig.label }}</strong>
+        <p>{{ locale === 'vi-VN' ? 'Thêm ' + activeTabConfig.label + ' đầu tiên để bắt đầu xây dựng thế giới phim của bạn.' : '添加第一个' + activeTabConfig.label + '，开始搭建你的短剧世界。' }}</p>
+        <AppButton type="button" variant="primary" size="sm" @click="openAssetDialog()"><Plus :size="15" />{{ locale === 'vi-VN' ? 'Thêm ' + activeTabConfig.label : '添加' + activeTabConfig.label }}</AppButton>
       </div>
       <div v-else class="asset-grid">
         <article
@@ -724,10 +726,10 @@ onBeforeUnmount(() => {
         >
           <button class="asset-card-open" type="button" :aria-label="`查看并编辑${activeTabConfig.label}：${asset.canonical_name}`" @click="handleAssetClick(asset)">
             <div class="asset-visual" :class="{ 'is-generating': generatingAssetIds.has(asset.id), 'is-empty': !asset.main_image }">
-              <div v-if="generatingAssetIds.has(asset.id)" class="asset-generating-placeholder" role="status" aria-live="polite">
+              <div v-if="generatingAssetIds.has(asset.id)" class="asset-generating-placeholder" role="status" aria-live="polite" data-test="正在生成参考图">
                 <span><LoaderCircle :size="24" /></span>
-                <strong>正在生成参考图</strong>
-                <small>完成后将在这里自动显示</small>
+                <strong>{{ locale === 'vi-VN' ? 'Đang tạo ảnh tham chiếu…' : '正在生成参考图' }}</strong>
+                <small>{{ locale === 'vi-VN' ? 'Sau khi hoàn tất sẽ tự động hiển thị tại đây' : '完成后将在这里自动显示' }}</small>
               </div>
               <img
                 v-else-if="asset.main_image"
@@ -737,18 +739,18 @@ onBeforeUnmount(() => {
                 decoding="async"
               />
               <component v-else :is="activeTabConfig.icon" :size="30" />
-              <AppBadge v-if="generatingAssetIds.has(asset.id)" class="asset-state-badge is-running" tone="accent" size="sm"><LoaderCircle :size="12" />生成中</AppBadge>
-              <AppBadge v-else-if="failedAssetIds.has(asset.id)" class="asset-state-badge" tone="danger" size="sm">生成失败</AppBadge>
+              <AppBadge v-if="generatingAssetIds.has(asset.id)" class="asset-state-badge is-running" tone="accent" size="sm"><LoaderCircle :size="12" />{{ locale === 'vi-VN' ? 'Đang tạo' : '生成中' }}</AppBadge>
+              <AppBadge v-else-if="failedAssetIds.has(asset.id)" class="asset-state-badge" tone="danger" size="sm">{{ locale === 'vi-VN' ? 'Thất bại' : '生成失败' }}</AppBadge>
               <div v-if="!generatingAssetIds.has(asset.id)" class="asset-card-info">
                 <strong>{{ truncateText(asset.canonical_name, 16) }}</strong>
-                <p>{{ truncateText(asset.description || `尚未填写${activeTabConfig.label}描述`, 32) }}</p>
+                <p>{{ truncateText(asset.description || (locale === 'vi-VN' ? `Chưa điền mô tả ${activeTabConfig.label}` : `尚未填写${activeTabConfig.label}描述`), 32) }}</p>
               </div>
             </div>
           </button>
           <div class="asset-card-actions" aria-label="资产操作">
-            <AppButton class="asset-card-action" type="button" variant="ghost" size="xs" icon-only data-tooltip="编辑" title="编辑" :disabled="mergingAssetIds.has(asset.id)" :aria-label="`编辑${asset.canonical_name}`" @click="openAssetDialog(asset)"><Pencil :size="14" /></AppButton>
-            <AppButton class="asset-card-action" type="button" variant="ghost" size="xs" icon-only data-tooltip="本地上传" title="本地上传" :disabled="mergingAssetIds.has(asset.id)" :aria-label="`为${asset.canonical_name}本地上传图片`" @click="openAssetDialog(asset, 'upload')"><Upload :size="14" /></AppButton>
-            <AppButton class="asset-card-action is-danger" type="button" variant="ghost" size="xs" icon-only data-tooltip="删除" title="删除" :disabled="mergingAssetIds.has(asset.id)" :aria-label="`删除${asset.canonical_name}`" @click="removeAsset(asset)"><Trash2 :size="14" /></AppButton>
+            <AppButton class="asset-card-action" type="button" variant="ghost" size="xs" icon-only data-tooltip="编辑" :title="locale === 'vi-VN' ? 'Sửa' : '编辑'" :disabled="mergingAssetIds.has(asset.id)" :aria-label="`编辑${asset.canonical_name}`" @click="openAssetDialog(asset)"><Pencil :size="14" /></AppButton>
+            <AppButton class="asset-card-action" type="button" variant="ghost" size="xs" icon-only data-tooltip="本地上传" :title="locale === 'vi-VN' ? 'Tải ảnh lên' : '本地上传'" :disabled="mergingAssetIds.has(asset.id)" :aria-label="`为${asset.canonical_name}本地上传图片`" @click="openAssetDialog(asset, 'upload')"><Upload :size="14" /></AppButton>
+            <AppButton class="asset-card-action is-danger" type="button" variant="ghost" size="xs" icon-only data-tooltip="删除" :title="locale === 'vi-VN' ? 'Xóa' : '删除'" :disabled="mergingAssetIds.has(asset.id)" :aria-label="`删除${asset.canonical_name}`" @click="removeAsset(asset)"><Trash2 :size="14" /></AppButton>
           </div>
           <div
             v-if="mergeHoverTargetId === asset.id"
@@ -757,8 +759,8 @@ onBeforeUnmount(() => {
             aria-hidden="true"
           >
             <span><MergeIcon :size="22" /></span>
-            <strong>{{ mergeArmedTargetId === asset.id ? '释放鼠标，立即合并' : '停留 2 秒准备合并' }}</strong>
-            <small>{{ mergeArmedTargetId === asset.id ? '保留较新资料，并继承双方图片' : '继续停留即可进入合并状态' }}</small>
+            <strong>{{ mergeArmedTargetId === asset.id ? (locale === 'vi-VN' ? 'Thả chuột để hợp nhất ngay' : '释放鼠标，立即合并') : (locale === 'vi-VN' ? 'Giữ chuột 2 giây để hợp nhất' : '停留 2 秒准备合并') }}</strong>
+            <small>{{ mergeArmedTargetId === asset.id ? (locale === 'vi-VN' ? 'Giữ dữ liệu mới hơn và thừa hưởng hình ảnh cả hai' : '保留较新资料，并继承双方图片') : (locale === 'vi-VN' ? 'Tiếp tục giữ để vào trạng thái hợp nhất' : '继续停留即可进入合并状态') }}</small>
             <i />
           </div>
         </article>
@@ -769,14 +771,14 @@ onBeforeUnmount(() => {
       <aside v-if="mergeArmedTargetId && draggingAsset && mergeTargetAsset" class="asset-merge-ready" role="status" aria-live="assertive">
         <span><MergeIcon :size="20" /></span>
         <div>
-          <strong>释放后合并至「{{ mergeTargetAsset.canonical_name }}」</strong>
-          <p>资料采用「{{ mergeDataAsset?.canonical_name }}」的较新版本<span v-if="mergeImageCount">，保留双方 {{ mergeImageCount }} 张图片</span></p>
+          <strong>{{ locale === 'vi-VN' ? `Thả để hợp nhất vào「${mergeTargetAsset.canonical_name}」` : `释放后合并至「${mergeTargetAsset.canonical_name}」` }}</strong>
+          <p>{{ locale === 'vi-VN' ? `Dữ liệu sử dụng bản mới hơn của「${mergeDataAsset?.canonical_name}」` : `资料采用「${mergeDataAsset?.canonical_name}」的较新版本` }}<span v-if="mergeImageCount">，{{ locale === 'vi-VN' ? `giữ lại ${mergeImageCount} hình ảnh của cả hai` : `保留双方 ${mergeImageCount} 张图片` }}</span></p>
         </div>
       </aside>
     </Transition>
 
     <AppButton class="manual-next-step" type="button" variant="dark" size="lg" @click="goToStoryboard">
-      <Clapperboard :size="17" />已确认，进入下一步
+      <Clapperboard :size="17" />{{ locale === 'vi-VN' ? 'Đã xác nhận, sang bước tiếp theo' : '已确认，进入下一步' }}
     </AppButton>
 
     <AssetCreateDialog

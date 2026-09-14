@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { BookOpenText, X } from 'lucide-vue-next'
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AppButton from './AppButton.vue'
 
 const props = withDefaults(defineProps<{
@@ -19,6 +20,7 @@ const emit = defineEmits<{
   save: [value: { name: string; content: string }]
 }>()
 
+const { locale } = useI18n()
 const nameDraft = ref('')
 const contentDraft = ref('')
 let previousBodyOverflow = ''
@@ -81,25 +83,25 @@ onBeforeUnmount(() => {
           <span class="chapter-detail-drawer__icon"><BookOpenText :size="18" /></span>
           <div>
             <span>CHAPTER DETAIL</span>
-            <h2 id="chapter-detail-title">第 {{ chapterNumber }} 集 · 章节详情</h2>
+            <h2 id="chapter-detail-title">{{ locale === 'vi-VN' ? `Tập ${chapterNumber} · Chi tiết chương` : `第 ${chapterNumber} 集 · 章节详情` }}</h2>
           </div>
-          <AppButton type="button" variant="ghost" size="sm" icon-only aria-label="关闭章节详情" @click="close"><X :size="18" /></AppButton>
+          <AppButton type="button" variant="ghost" size="sm" icon-only :aria-label="locale === 'vi-VN' ? 'Đóng chi tiết chương' : '关闭章节详情'" @click="close"><X :size="18" /></AppButton>
         </header>
 
         <div class="chapter-detail-drawer__body">
           <label>
-            <span><b aria-hidden="true">*</b>章节标题</span>
-            <input v-model="nameDraft" type="text" maxlength="200" autocomplete="off" placeholder="请输入章节标题" />
+            <span><b aria-hidden="true">*</b>{{ locale === 'vi-VN' ? 'Tiêu đề chương' : '章节标题' }}</span>
+            <input v-model="nameDraft" type="text" maxlength="200" autocomplete="off" :placeholder="locale === 'vi-VN' ? 'Vui lòng nhập tiêu đề chương' : '请输入章节标题'" />
           </label>
           <label class="is-content">
-            <span>章节内容</span>
-            <textarea v-model="contentDraft" placeholder="请输入章节内容" />
+            <span>{{ locale === 'vi-VN' ? 'Nội dung chương' : '章节内容' }}</span>
+            <textarea v-model="contentDraft" :placeholder="locale === 'vi-VN' ? 'Vui lòng nhập nội dung chương' : '请输入章节内容'" />
           </label>
         </div>
 
         <footer>
-          <AppButton type="button" variant="secondary" :disabled="saving" @click="close">取消</AppButton>
-          <AppButton type="submit" variant="primary" :loading="saving" :disabled="!nameDraft.trim()">保存章节</AppButton>
+          <AppButton type="button" variant="secondary" :disabled="saving" @click="close">{{ $t('common.cancel') }}</AppButton>
+          <AppButton type="submit" variant="primary" :loading="saving" :disabled="!nameDraft.trim()">{{ locale === 'vi-VN' ? 'Lưu chương' : '保存章节' }}</AppButton>
         </footer>
       </form>
     </Transition>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AppButton from '@/components/AppButton.vue'
 import AppScrollArea from '@/components/AppScrollArea.vue'
 import { episodeDisplayLabel, stripChapterOrdinal } from '@/shared/chapterTitle'
@@ -13,6 +14,8 @@ defineProps<{
 const emit = defineEmits<{
   select: [chapter: Chapter]
 }>()
+
+const { locale } = useI18n()
 
 const railElement = ref<HTMLElement | null>(null)
 const tooltipChapter = ref<Chapter | null>(null)
@@ -41,7 +44,7 @@ function selectChapter(chapter: Chapter) {
 
 <template>
   <aside ref="railElement" class="episode-rail" aria-label="集数导航">
-    <strong>集数</strong>
+    <strong>{{ locale === 'vi-VN' ? 'Tập' : '集数' }}</strong>
     <AppScrollArea class="episode-rail__list" aria-label="项目集数列表" @scroll="hideTooltip">
       <AppButton
         v-for="chapter in chapters"

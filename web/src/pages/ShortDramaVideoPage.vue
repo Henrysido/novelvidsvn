@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   AlertTriangle,
   ArrowDownToLine,
@@ -41,6 +42,7 @@ interface ProjectView extends Novel {
 
 const route = useRoute()
 const router = useRouter()
+const { locale } = useI18n()
 const projectId = computed(() => Number(route.params.projectId))
 const project = ref<ProjectView | null>(null)
 const chapters = ref<Chapter[]>([])
@@ -98,10 +100,16 @@ function formatTime(seconds: number) {
 }
 
 function sceneLabel(item: ChapterVideoTimelineItem) {
-  return `分镜 ${item.scene.sequence}`
+  return locale.value === 'vi-VN' ? `Phân cảnh ${item.scene.sequence}` : `分镜 ${item.scene.sequence}`
 }
 
 function statusLabel(item: ChapterVideoTimelineItem) {
+  if (locale.value === 'vi-VN') {
+    if (item.state === 'completed') return 'Video đã tạo'
+    if (item.state === 'generating') return 'Đang tạo video'
+    if (item.state === 'failed') return 'Tạo video thất bại'
+    return 'Chưa tạo video'
+  }
   if (item.state === 'completed') return '视频已生成'
   if (item.state === 'generating') return '视频生成中'
   if (item.state === 'failed') return '视频生成失败'
@@ -395,25 +403,25 @@ onUnmounted(() => gapPlaybackClock.stop())
     >
       <template #header-end>
         <div class="video-header-actions">
-          <AppButton variant="secondary" size="sm" @click="returnToStoryboard()"><Clapperboard :size="15" />返回分镜</AppButton>
-          <AppButton variant="secondary" size="sm" :disabled="playableItems.length === 0 || downloadingChapter" :aria-busy="downloadingChapter" aria-label="合成并下载本集已有视频" title="合成并下载本集已有视频" @click="downloadCurrentChapterVideo"><LoaderCircle v-if="downloadingChapter" class="is-spinning" :size="15" /><Download v-else :size="15" />{{ downloadingChapter ? '正在合成' : '下载当前' }}</AppButton>
+          <AppButton variant="secondary" size="sm" @click="returnToStoryboard()"><Clapperboard :size="15" />{{ locale === 'vi-VN' ? 'Quay lại phân cảnh' : '返回分镜' }}</AppButton>
+          <AppButton variant="secondary" size="sm" :disabled="playableItems.length === 0 || downloadingChapter" :aria-busy="downloadingChapter" :aria-label="locale === 'vi-VN' ? 'Ghép và tải xuống các video có sẵn của tập này' : '合成并下载本集已有视频'" :title="locale === 'vi-VN' ? 'Ghép và tải xuống các video có sẵn của tập này' : '合成并下载本集已有视频'" @click="downloadCurrentChapterVideo"><LoaderCircle v-if="downloadingChapter" class="is-spinning" :size="15" /><Download v-else :size="15" />{{ downloadingChapter ? (locale === 'vi-VN' ? 'Đang ghép…' : '正在合成') : (locale === 'vi-VN' ? 'Tải tập này' : '下载当前') }}</AppButton>
         </div>
       </template>
 
       <section class="video-editor-workspace">
-        <div v-if="loading" class="video-page-state"><LoaderCircle class="is-spinning" :size="30" /><strong>正在加载本集视频</strong><span>准备分镜顺序和生成结果。</span></div>
-        <div v-else-if="loadError" class="video-page-state is-error"><AlertTriangle :size="30" /><strong>视频工作区加载失败</strong><span>{{ loadError }}</span><AppButton variant="primary" size="sm" @click="load">重新加载</AppButton></div>
-        <div v-else-if="!videoEnabled" class="video-page-state is-empty"><Film :size="34" /><strong>本集还没有可编辑的视频</strong><span>任意一个分镜视频生成成功后，即可进入视频编辑页。</span><AppButton variant="primary" size="sm" @click="returnToStoryboard()"><ChevronLeft :size="15" />返回分镜生成</AppButton></div>
+        <div v-if="loading" class="video-page-state"><LoaderCircle class="is-spinning" :size="30" /><strong>{{ locale === 'vi-VN' ? 'Đang tải video tập này' : '正在加载本集视频' }}</strong><span>{{ locale === 'vi-VN' ? 'Chuẩn bị thứ tự phân cảnh và kết quả tạo.' : '准备分镜顺序和生成结果。' }}</span></div>
+        <div v-else-if="loadError" class="video-page-state is-error"><AlertTriangle :size="30" /><strong>{{ locale === 'vi-VN' ? 'Tải không gian video thất bại' : '视频工作区加载失败' }}</strong><span>{{ loadError }}</span><AppButton variant="primary" size="sm" @click="load">{{ locale === 'vi-VN' ? 'Tải lại' : '重新加载' }}</AppButton></div>
+        <div v-else-if="!videoEnabled" class="video-page-state is-empty"><Film :size="34" /><strong>{{ locale === 'vi-VN' ? 'Tập này chưa có video nào để chỉnh sửa' : '本集还没有可编辑的视频' }}</strong><span>{{ locale === 'vi-VN' ? 'Khi bất kỳ phân cảnh nào tạo video thành công, bạn có thể vào trang biên tập video.' : '任意一个分镜视频生成成功后，即可进入视频编辑页。' }}</span><AppButton variant="primary" size="sm" @click="returnToStoryboard()"><ChevronLeft :size="15" />{{ locale === 'vi-VN' ? 'Quay lại tạo phân cảnh' : '返回分镜生成' }}</AppButton></div>
 
         <template v-else>
           <section class="video-stage-card">
             <header class="video-stage-header">
               <div>
-                <span>{{ activeChapter ? episodeDisplayLabel(activeChapter) : '当前集' }}</span>
-                <strong>{{ activeItem ? sceneLabel(activeItem) : '选择分镜' }}</strong>
+                <span>{{ activeChapter ? episodeDisplayLabel(activeChapter) : (locale === 'vi-VN' ? 'Tập hiện tại' : '当前集') }}</span>
+                <strong>{{ activeItem ? sceneLabel(activeItem) : (locale === 'vi-VN' ? 'Chọn phân cảnh' : '选择分镜') }}</strong>
                 <small v-if="activeItem?.scene.description">{{ activeItem.scene.description }}</small>
               </div>
-              <AppButton variant="primary" size="sm" @click="returnToStoryboard(activeSceneId)"><Scissors :size="15" />编辑分镜</AppButton>
+              <AppButton variant="primary" size="sm" @click="returnToStoryboard(activeSceneId)"><Scissors :size="15" />{{ locale === 'vi-VN' ? 'Sửa phân cảnh' : '编辑分镜' }}</AppButton>
             </header>
 
             <div ref="stage" class="video-stage" :class="{ 'has-video': Boolean(activeItem?.video?.url), 'is-blackout': Boolean(activeItem && !activeItem.video?.url) }">
@@ -425,7 +433,7 @@ onUnmounted(() => gapPlaybackClock.stop())
                 :poster="activeItem.coverUrl || undefined"
                 preload="metadata"
                 playsinline
-                :aria-label="`${sceneLabel(activeItem)} 视频预览`"
+                :aria-label="`${sceneLabel(activeItem)} ${locale === 'vi-VN' ? 'Xem trước video' : '视频预览'}`"
                 @loadedmetadata="updatePlayerMetadata"
                 @timeupdate="updatePlaybackPosition"
                 @play="handlePlayerPlay"
@@ -437,50 +445,50 @@ onUnmounted(() => gapPlaybackClock.stop())
                 v-else-if="activeItem?.video?.url"
                 type="button"
                 class="video-stage-poster"
-                :aria-label="`播放${sceneLabel(activeItem)}`"
+                :aria-label="`${locale === 'vi-VN' ? 'Phát ' : '播放'}${sceneLabel(activeItem)}`"
                 @click="togglePlayback"
               >
                 <img
                   v-if="videoCoverUrl(activeItem.video)"
                   :src="videoCoverUrl(activeItem.video)"
-                  :alt="`${sceneLabel(activeItem)}视频封面`"
+                  :alt="`${sceneLabel(activeItem)}${locale === 'vi-VN' ? ' Ảnh bìa video' : '视频封面'}`"
                   decoding="async"
                 >
                 <Film v-else :size="38" />
                 <i><Play :size="24" fill="currentColor" /></i>
               </button>
-              <div v-else class="video-stage-blackout" role="img" :aria-label="activeItem ? `${sceneLabel(activeItem)}无视频，使用黑屏占位` : '黑屏占位'" />
+              <div v-else class="video-stage-blackout" role="img" :aria-label="activeItem ? `${sceneLabel(activeItem)}${locale === 'vi-VN' ? ' không có video, hiển thị màn hình đen giữ chỗ' : '无视频，使用黑屏占位'}` : (locale === 'vi-VN' ? 'Màn hình đen giữ chỗ' : '黑屏占位')" />
 
               <div v-if="activeItem?.video?.url" class="video-stage-overlay">
-                <AppButton variant="dark" size="sm" icon-only :aria-label="muted ? '打开声音' : '静音'" :title="muted ? '打开声音' : '静音'" @click="muted = !muted"><VolumeX v-if="muted" :size="16" /><Volume2 v-else :size="16" /></AppButton>
-                <AppButton variant="dark" size="sm" :aria-label="`播放速度 ${playbackRate} 倍`" @click="cyclePlaybackRate">{{ playbackRate }}x</AppButton>
-                <AppButton variant="dark" size="sm" icon-only :disabled="downloadingChapter" :aria-busy="downloadingChapter" aria-label="合成并下载本集已有视频" title="合成并下载本集已有视频" @click="downloadCurrentChapterVideo"><LoaderCircle v-if="downloadingChapter" class="is-spinning" :size="16" /><ArrowDownToLine v-else :size="16" /></AppButton>
-                <AppButton variant="dark" size="sm" icon-only aria-label="全屏预览" title="全屏预览" @click="toggleFullscreen"><Maximize2 :size="16" /></AppButton>
+                <AppButton variant="dark" size="sm" icon-only :aria-label="muted ? (locale === 'vi-VN' ? 'Bật âm thanh' : '打开声音') : (locale === 'vi-VN' ? 'Tắt tiếng' : '静音')" :title="muted ? (locale === 'vi-VN' ? 'Bật âm thanh' : '打开声音') : (locale === 'vi-VN' ? 'Tắt tiếng' : '静音')" @click="muted = !muted"><VolumeX v-if="muted" :size="16" /><Volume2 v-else :size="16" /></AppButton>
+                <AppButton variant="dark" size="sm" :aria-label="`${locale === 'vi-VN' ? 'Tốc độ phát ' : '播放速度 '}${playbackRate}x`" @click="cyclePlaybackRate">{{ playbackRate }}x</AppButton>
+                <AppButton variant="dark" size="sm" icon-only :disabled="downloadingChapter" :aria-busy="downloadingChapter" :aria-label="locale === 'vi-VN' ? 'Ghép và tải xuống các video có sẵn của tập này' : '合成并下载本集已有视频'" :title="locale === 'vi-VN' ? 'Ghép và tải xuống các video có sẵn của tập này' : '合成并下载本集已有视频'" @click="downloadCurrentChapterVideo"><LoaderCircle v-if="downloadingChapter" class="is-spinning" :size="16" /><ArrowDownToLine v-else :size="16" /></AppButton>
+                <AppButton variant="dark" size="sm" icon-only :aria-label="locale === 'vi-VN' ? 'Xem toàn màn hình' : '全屏预览'" :title="locale === 'vi-VN' ? 'Xem toàn màn hình' : '全屏预览'" @click="toggleFullscreen"><Maximize2 :size="16" /></AppButton>
               </div>
             </div>
 
             <footer class="video-player-controls">
               <div class="video-player-buttons">
-                <AppButton variant="ghost" size="sm" icon-only aria-label="上一个分镜" :disabled="!canGoPrevious" @click="previousClip"><SkipBack :size="17" /></AppButton>
-                <AppButton class="video-play-button" variant="dark" size="lg" icon-only :aria-label="playing ? '暂停' : '播放'" :disabled="!activeItem" @click="togglePlayback"><Pause v-if="playing" :size="18" fill="currentColor" /><Play v-else :size="18" fill="currentColor" /></AppButton>
-                <AppButton variant="ghost" size="sm" icon-only aria-label="下一个分镜" :disabled="!canGoNext" @click="nextClip()"><SkipForward :size="17" /></AppButton>
+                <AppButton variant="ghost" size="sm" icon-only :aria-label="locale === 'vi-VN' ? 'Phân cảnh trước' : '上一个分镜'" :disabled="!canGoPrevious" @click="previousClip"><SkipBack :size="17" /></AppButton>
+                <AppButton class="video-play-button" variant="dark" size="lg" icon-only :aria-label="playing ? (locale === 'vi-VN' ? 'Tạm dừng' : '暂停') : (locale === 'vi-VN' ? 'Phát' : '播放')" :disabled="!activeItem" @click="togglePlayback"><Pause v-if="playing" :size="18" fill="currentColor" /><Play v-else :size="18" fill="currentColor" /></AppButton>
+                <AppButton variant="ghost" size="sm" icon-only :aria-label="locale === 'vi-VN' ? 'Phân cảnh tiếp theo' : '下一个分镜'" :disabled="!canGoNext" @click="nextClip()"><SkipForward :size="17" /></AppButton>
               </div>
               <span>{{ formatTime(chapterCurrentTime) }} <i>/</i> {{ formatTime(totalDuration) }}</span>
-              <input type="range" min="0" max="100" step="0.1" :value="progressPercent" aria-label="本集视频播放进度" @input="seekChapter" />
+              <input type="range" min="0" max="100" step="0.1" :value="progressPercent" :aria-label="locale === 'vi-VN' ? 'Tiến độ phát video tập này' : '本集视频播放进度'" @input="seekChapter" />
             </footer>
           </section>
 
-          <section class="video-timeline" aria-label="本集分镜视频时间线">
+          <section class="video-timeline" :aria-label="locale === 'vi-VN' ? 'Dòng thời gian video các phân cảnh tập này' : '本集分镜视频时间线'">
             <header>
-              <div><strong>本集时间线</strong><span>{{ playableItems.length }}/{{ timelineItems.length }} 条可用</span></div>
-              <small>缺失和异常分镜会保留位置，可随时返回补充生成。</small>
+              <div><strong>{{ locale === 'vi-VN' ? 'Dòng thời gian tập này' : '本集时间线' }}</strong><span>{{ playableItems.length }}/{{ timelineItems.length }} {{ locale === 'vi-VN' ? 'khả dụng' : '条可用' }}</span></div>
+              <small>{{ locale === 'vi-VN' ? 'Phân cảnh thiếu hoặc lỗi sẽ giữ nguyên vị trí, có thể quay lại tạo bổ sung bất kỳ lúc nào.' : '缺失和异常分镜会保留位置，可随时返回补充生成。' }}</small>
             </header>
             <div class="video-timeline-body">
-              <div class="video-timeline-scale" aria-label="时间轴刻度缩放">
-                <button type="button" aria-label="放大时间轴刻度" :disabled="timelineScale >= MAX_TIMELINE_SCALE" @click="setTimelineScale(timelineScale + 1)"><ZoomIn :size="15" /></button>
-                <input v-model.number="timelineScale" type="range" :min="MIN_TIMELINE_SCALE" :max="MAX_TIMELINE_SCALE" step="1" aria-label="时间轴刻度尺寸" :aria-valuetext="`刻度 ${timelineScale}`" />
+              <div class="video-timeline-scale" :aria-label="locale === 'vi-VN' ? 'Thu phóng tỷ lệ thời gian' : '时间轴刻度缩放'">
+                <button type="button" :aria-label="locale === 'vi-VN' ? 'Phóng to tỷ lệ thời gian' : '放大时间轴刻度'" :disabled="timelineScale >= MAX_TIMELINE_SCALE" @click="setTimelineScale(timelineScale + 1)"><ZoomIn :size="15" /></button>
+                <input v-model.number="timelineScale" type="range" :min="MIN_TIMELINE_SCALE" :max="MAX_TIMELINE_SCALE" step="1" aria-label="时间轴刻度尺寸" :aria-valuetext="`${locale === 'vi-VN' ? 'Tỷ lệ ' : '刻度 '}${timelineScale}`" />
                 <output>{{ timelineScale }}</output>
-                <button type="button" aria-label="缩小时间轴刻度" :disabled="timelineScale <= MIN_TIMELINE_SCALE" @click="setTimelineScale(timelineScale - 1)"><ZoomOut :size="15" /></button>
+                <button type="button" :aria-label="locale === 'vi-VN' ? 'Thu nhỏ tỷ lệ thời gian' : '缩小时间轴刻度'" :disabled="timelineScale <= MIN_TIMELINE_SCALE" @click="setTimelineScale(timelineScale - 1)"><ZoomOut :size="15" /></button>
               </div>
               <div ref="timelineScroll" class="video-timeline-scroll">
                 <div class="video-timeline-canvas" :style="{ '--timeline-width': `${timelineContentWidth}px` }">
@@ -507,10 +515,10 @@ onUnmounted(() => gapPlaybackClock.stop())
                       <span class="video-timeline-copy"><strong>{{ sceneLabel(item) }}</strong><small>{{ formatTime(item.duration) }}</small></span>
                       <span class="video-timeline-thumb">
                         <img v-if="item.video?.url && item.coverUrl" :src="item.coverUrl" alt="" loading="lazy" decoding="async" />
-                        <template v-else-if="item.video?.url"><Film :size="23" /><em>点击播放</em></template>
-                        <template v-else-if="item.state === 'failed'"><AlertTriangle :size="23" /><em>生成失败</em></template>
-                        <template v-else-if="item.state === 'generating'"><LoaderCircle class="is-spinning" :size="23" /><em>生成中</em></template>
-                        <template v-else><Film :size="23" /><em>待生成</em></template>
+                        <template v-else-if="item.video?.url"><Film :size="23" /><em>{{ locale === 'vi-VN' ? 'Nhấp phát' : '点击播放' }}</em></template>
+                        <template v-else-if="item.state === 'failed'"><AlertTriangle :size="23" /><em>{{ locale === 'vi-VN' ? 'Tạo thất bại' : '生成失败' }}</em></template>
+                        <template v-else-if="item.state === 'generating'"><LoaderCircle class="is-spinning" :size="23" /><em>{{ locale === 'vi-VN' ? 'Đang tạo' : '生成中' }}</em></template>
+                        <template v-else><Film :size="23" /><em>{{ locale === 'vi-VN' ? 'Chờ tạo' : '待生成' }}</em></template>
                       </span>
                     </button>
                   </div>

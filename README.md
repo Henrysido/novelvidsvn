@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="docs/images/logo.png" width="200" alt="猫影短剧 Logo">
+  <img src="docs/images/logo.png" width="200" alt="NovelVids VN Logo">
 </p>
 
-<h1 align="center">猫影短剧</h1>
+<h1 align="center">NovelVids VN (Mèo Ảnh Đoản Kịch)</h1>
 
 <p align="center">
-  <strong>「 AI 驱动的小说转短剧全流程生产平台 」</strong>
+  <strong>「 Nền tảng sản xuất phim ngắn (Short Drama) từ tiểu thuyết bằng AI trọn gói 」</strong>
 </p>
 
 <p align="center">
@@ -19,461 +19,454 @@
 </p>
 
 <p align="center">
-  <a href="#成品视频示例">成品视频示例</a> &bull;
-  <a href="#在线演示">在线演示</a> &bull;
-  <a href="#核心功能">核心功能</a> &bull;
-  <a href="#界面预览">界面预览</a> &bull;
-  <a href="#快速开始">快速开始</a> &bull;
-  <a href="#模型配置">模型配置</a> &bull;
-  <a href="#数据库与媒体存储">数据库与媒体存储</a> &bull;
-  <a href="#项目结构">项目结构</a> &bull;
-  <a href="#技术栈">技术栈</a> &bull;
-  <a href="#测试">测试</a> &bull;
-  <a href="#许可协议">许可协议</a>
+  <a href="#video-thành-phẩm-mẫu">Video Thành Phẩm Mẫu</a> &bull;
+  <a href="#demo-trực-tuyến">Demo Trực Tuyến</a> &bull;
+  <a href="#tính-năng-cốt-lõi">Tính Năng Cốt Lõi</a> &bull;
+  <a href="#xem-trước-giao-diện">Xem Trước Giao Diện</a> &bull;
+  <a href="#bắt-đầu-nhanh">Bắt Đầu Nhanh</a> &bull;
+  <a href="#cấu-hình-mô-hình-ai">Cấu Hình Mô Hình AI</a> &bull;
+  <a href="#cơ-sở-dữ-liệu--lưu-trữ-media">Cơ Sở Dữ Liệu & Lưu Trữ</a> &bull;
+  <a href="#cấu-trúc-dự-án">Cấu Trúc Dự Án</a> &bull;
+  <a href="#tech-stack">Tech Stack</a> &bull;
+  <a href="#kiểm-thử">Kiểm Thử</a> &bull;
+  <a href="#giấy-phép-bản-quyền">Giấy Phép Bản Quyền</a>
 </p>
 
 ---
 
-## 介绍
+## Giới thiệu
 
-**猫影短剧** 是一个开源的 AI 短剧生产平台。输入一部小说，或上传已有视频作为重制来源，即可自动完成
-**章节拆分 / 视频理解 → 实体提取 → 设定资产生成 → 分镜生成 → 多模态视频生成 → 章节成片合并** 的全流程，把文字小说或参考成片变成可持续生产的短剧项目。
+**NovelVids VN** là nền tảng sản xuất phim ngắn (AI Short Drama) mã nguồn mở toàn diện. Chỉ cần nhập một tác phẩm tiểu thuyết, hoặc tải lên video tham chiếu có sẵn để làm lại (remake), hệ thống sẽ tự động thực hiện toàn bộ quy trình:
+**Tách chương / Hiểu video → Trích xuất thực thể → Tạo tài sản thiết lập (Nhân vật, Bối cảnh, Đạo cụ) → Tạo phân cảnh kịch bản → Sinh video đa phương thức → Ghép nối thành phẩm hoàn chỉnh theo tập**, biến tác phẩm chữ hoặc phim mẫu thành chuỗi sản xuất phim ngắn nhất quán và bền vững.
 
-平台同时提供 Agent 与人工编辑两种创作方式，支持分镜策略、角色衍生形态、角色/旁白音色、首尾帧连续生成、批量无人值守生成，以及 Seedance、MiniMax H3、Wan3 等视频模型的统一适配。
+Nền tảng hỗ trợ cả 2 chế độ sáng tạo: **Agent AI tự động** và **Biên tập thủ công (Manual)**, hỗ trợ nhiều chiến lược phân cảnh, biến thể nhân vật (trang phục, độ tuổi), giọng đọc nhân vật/thuyết minh độc lập, sinh chuỗi video liền mạch từ khung hình cuối (First-Last Frame Continuity), sinh hàng loạt không cần giám sát, cùng bộ điều hợp (adapter) thống nhất cho các mô hình video hàng đầu như Seedance (Doubao), MiniMax H3, Wan3 (Aliyun Bailian).
 
-本项目不是 demo 或 proof-of-concept，而是拥有完整工程架构、严格分层设计与全面测试覆盖、可直接部署使用的生产级应用。
+Dự án không phải là bản demo hay proof-of-concept đơn giản, mà sở hữu kiến trúc kỹ thuật hoàn chỉnh, phân tầng rõ ràng, kiểm thử toàn diện và sẵn sàng triển khai thực tế bằng Docker.
 
-## 在线演示
+## Demo Trực Tuyến
 
-- 地址：<https://demo.xiazq.com>
-- 用户名：`demo`
-- 密码：`NovelVids-Demo-2026`
-- 权限：演示团队查看者，可浏览项目、设定、分镜、图片和已有视频；写操作由后端 RBAC 拒绝
-- 数据：团队余额与个人额度均为 0，不配置模型 Key，不使用 OSS；每天北京时间 `00:00` 恢复黄金快照（包括被修改的演示密码）
-- API 文档：<https://demo.xiazq.com/docs>（仅演示站开放；正式商业站默认建议关闭）
+- Địa chỉ: <https://demo.xiazq.com>
+- Tài khoản: `demo`
+- Mật khẩu: `NovelVids-Demo-2026`
+- Quyền hạn: Người xem (Viewer) của đội ngũ demo; có thể duyệt dự án, thiết lập, kịch bản phân cảnh, hình ảnh và video có sẵn. Mọi thao tác ghi/sửa sẽ bị RBAC từ chối.
+- Dữ liệu: Số dư cá nhân và đội nhóm là 0, không cấu hình API Key thật, không sử dụng OSS bên ngoài; tự động khôi phục bản sao chuẩn vào lúc `00:00` hàng ngày.
+- Tài liệu API: <https://demo.xiazq.com/docs> (Chỉ mở trên bản demo; môi trường thương mại khuyến nghị tắt).
 
-演示站与商业环境完全隔离，使用独立数据库和本地媒体副本，并启用应用与反向代理双层登录限流、安全响应头、可信代理校验和每日原子还原。请勿在演示站上传隐私或生产数据。
+## Video Thành Phẩm Mẫu
 
-## 成品视频示例
+Đoạn phim ngắn hoàn chỉnh được tạo tự động từ tiểu thuyết thông qua NovelVids:
 
-一段由猫影短剧从小说自动生成的短剧成品片段：
+[![Xem video mẫu](docs/videos/demo-cover.jpg)](https://youtu.be/fdiw__J19uk)
 
-<!--
-  TODO(成品视频)：把完整视频上传到 B 站 / YouTube / 优酷后，把下方链接替换为真实地址。
--->
+![Xem trước khoảnh khắc](docs/videos/demo-preview.gif)
 
-[![成品视频示例封面](docs/videos/demo-cover.jpg)](https://youtu.be/fdiw__J19uk)
+> Nhấp vào ảnh bìa để xem video đầy đủ. Chuỗi tạo: Tải tiểu thuyết → Phân tích chương → Trích xuất thực thể → Sinh ảnh nhân vật/bối cảnh → Sinh phân cảnh chi tiết → Hợp thành video từng cảnh → Ghép nối tập phim.
 
-![成品视频高光预览](docs/videos/demo-preview.gif)
+## Tính Năng Cốt Lõi
 
-> 点击封面观看完整片段。生成链路：上传小说 → 章节拆分 → 实体提取 → 参考图生成 → 分镜生成 → 逐镜头视频合成。
+### Từ Bản Thảo Đến Dự Án Hoàn Chỉnh
 
-## 核心功能
+- Hỗ trợ dán văn bản trực tiếp hoặc tải tệp định dạng `.doc`, `.docx`, `.txt`, `.pdf`; tự động phân tích cấu trúc văn bản và chia chương.
+- **Chế độ Agent:** Tự động hoàn tất phân tích tác phẩm, chia tập/chương và lập kế hoạch tài sản.
+- **Chế độ Thủ công (Manual):** Cho phép người dùng can thiệp, chỉnh sửa kịch bản và tài sản theo từng bước.
+- Tỷ lệ khung hình (16:9, 9:16, 1:1, 4:3), độ phân giải (720P, 1080P, 2K), phong cách mỹ thuật và chiến lược phân cảnh được xác lập ngay khi tạo dự án và đồng bộ xuyên suốt.
+- Hỗ trợ chuyển đổi giao diện Sáng / Tối (Light / Dark theme) với nền làm việc chuyên dụng, lưu trạng thái cục bộ.
 
-### 从书稿到项目
+### Xưởng Tái Chế Video (Remake Workshop)
 
-- 支持粘贴文本和上传 `doc`、`docx`、`txt`、`pdf`，自动解析正文与章节结构
-- Agent 模式自动完成项目分析、章节拆分与资产规划；人工模式可逐步编辑
-- 项目比例、分辨率、视觉风格和分镜策略在创建时确定，并在后续页面保持一致
-- 浅色/深色主题拥有独立创作页背景，界面设置本地持久化
+- Tải lên video đơn lẻ (`.mp4`, `.mov`) hoặc cả thư mục video được đặt tên theo tập; hỗ trợ tái chế từ các dự án lịch sử có sẵn trong hệ thống.
+- Hỗ trợ video dung lượng lên tới 500 MB, thời lượng tối đa 20 phút; chế độ thư mục tự động nhận diện định dạng số tập ("Tập 1", "EP01", "E01", "1話", v.v.) và sắp xếp chuẩn xác.
+- Backend phân tích toàn cục nhân vật, bối cảnh, đạo cụ; sử dụng PySceneDetect để phát hiện ranh giới chuyển cảnh và sinh Prompt phân cảnh chuyên nghiệp.
+- Tiến trình chạy bất đồng bộ trên máy chủ (Server-side SSE); đóng trình duyệt hoặc F5 không làm gián đoạn tác vụ, hỗ trợ khôi phục tiến độ từ bản lưu snapshot.
 
-### 重制工坊
+### Quản Lý Tài Sản & Biến Thể Nhân Vật
 
-- 支持上传单个 `mp4` / `mov` 视频、按集数命名的整套文件夹，以及选择系统内的历史项目
-- 单视频最大 500 MB、最长 20 分钟；文件夹模式自动识别“第12集 / 第12话 / EP12 / E12 / 12集”等集数格式并排序
-- 创建时可选择比例、清晰度和视觉风格，入口与短剧制作复用同一套创作 UI
-- 后端先识别全局角色、场景和道具，再检测镜头并逐段生成专业分镜 Prompt，最终写入现有设定页、故事版与无限画布
-- 拆解任务在服务端异步运行；关闭或刷新页面不会取消任务，重新进入项目可从持久化快照恢复进度
-- 独立进度页通过 SSE 展示逐集、逐阶段和逐镜头进度，失败集可单独重试，成功集无需重复上传
-- 视频理解模型仍作为 LLM 的“重制”能力用途配置；支持豆包关闭思考模式、受控并发、10 分钟单请求超时与安全耗时记录
+- Tự động trích xuất nhân vật, bối cảnh, đạo cụ; tự động gom nhóm các tên gọi khác nhau (alias) của cùng một thực thể.
+- Hỗ trợ tạo đồng thời cả 3 loại tài sản (nhân vật, cảnh, đạo cụ) trong một tác vụ hàng loạt.
+- Đa dạng phương thức tạo: Chữ sinh ảnh (Text-to-Image), tải ảnh lên, chọn từ kho nhân vật số / thư viện mẫu, hoặc dùng ảnh tham chiếu (Image-to-Image).
+- Lưu trữ lịch sử tạo và phiên bản hiện tại; hỗ trợ phóng to xem trước, chuyển đổi phiên bản và phản hồi trạng thái tạo theo thời gian thực.
+- Hỗ trợ biến thể nhân vật (đổi trang phục, thay đổi độ tuổi, trạng thái cảm xúc/vết thương); mỗi biến thể có thể cấu hình ảnh và giọng nói riêng biệt.
+- Hỗ trợ gộp tài sản (merge) và liên kết tài sản cấp chương; kịch bản phân cảnh và Canvas vô cực dùng chung quan hệ tham chiếu.
 
-### 设定资产与衍生形态
+### Chiến Lược Phân Cảnh & Prompt Chuyên Nghiệp
 
-- 自动提取角色、场景、道具，并将同一实体的别名统一归档
-- 角色、场景、道具三类资产可在一次批量任务中同时生成
-- 支持文生图、上传图片、从音色库选择，以及参考图驱动的图生图
-- 每个资产保留生成历史和当前版本；支持图片放大预览、切换当前版本与生成状态反馈
-- 支持角色变装、年龄/状态变化等衍生形态；每个衍生形态可独立配置图片和音色
-- 支持资产合并与章节级资产绑定，故事版与无限画布共享同一份引用关系
+- Cơ chế phân cảnh linh hoạt: Tích hợp sẵn chiến lược **Điện ảnh (Cinematic)** và chiến lược **Thuyết minh (Narrative Voiceover)**, chuyển đổi linh hoạt bất cứ lúc nào.
+- Chiến lược thuyết minh cho phép gán giọng đọc thuyết minh đồng nhất cho toàn dự án và tự động chèn thuyết minh/độc thoại nội tâm vào các phân đoạn không có thoại nhân vật.
+- Mỗi Prompt video là một nhiệm vụ quay độc lập: Mô tả rõ ràng thời gian, môi trường ánh sáng, góc máy, vị trí nhân vật, khởi đầu và kết thúc của động tác cùng âm thanh.
+- Prompt chuẩn sử dụng cú pháp `@{TênTàiSản}` và `@AudioN` để ràng buộc trực tiếp nhân vật, cảnh, đạo cụ và âm thanh tương ứng.
+- Trình biên tập trực quan cho phép nhấp vào thẻ tài sản / âm thanh để nghe thử hoặc xem trước ảnh mẫu; tự động gợi ý gắn thẻ khi phát hiện thực thể còn thiếu.
 
-### 分镜策略与专业 Prompt
+### Storyboard & Canvas Vô Cực (Infinite Workbench)
 
-- 分镜策略工厂：内置「电影感叙事」和「旁白叙事」，项目创建和剧本编辑均可切换
-- 旁白策略可配置统一旁白音色，并在无人物对白的时间段安排旁白或人物内心 OS
-- 每个视频 Prompt 都是可独立执行的镜头任务：完整写明时间、环境、站位、动作起止和声音
-- 最终 Prompt 使用 `@{资产名}` 与 `@音频N` 显式绑定角色、场景、道具和角色音色
-- 高优先级核心生成指令会前置初始画面、动作、人声和同步音效，再保留详细时间轴
-- 分镜 Prompt 可视化编辑，资产/音频标签可点击预览或播放；遗漏实体引用会自动补标
+- **Storyboard (Bảng phân cảnh):** Giao diện tập trung quản lý mô tả phân cảnh, tài sản liên kết, prompt chi tiết, tham số camera và trạng thái kết xuất video.
+- **Canvas vô cực (Dựa trên Vue Flow):** Hỗ trợ kéo thả, cuộn mượt, chọn vùng, phóng to/thu nhỏ, tự động sắp xếp layout, sao chép/dán, hoàn tác/làm lại (Undo/Redo), gấp gọn node và lưu trạng thái viewport.
+- Kéo thả trực tiếp ảnh tham chiếu vào Canvas; chia sẻ chung giao thức tài nguyên đa phương thức với Storyboard.
+- Các thiết lập về mô hình AI, tỷ lệ khung hình và độ phân giải được lưu bền vững, không bị nhảy thông số khi tải lại trang.
 
-### 故事版与无限画布
+### Thư Viện Giọng Nói & Tính Nhất Quán Âm Thanh
 
-- 故事版集中编辑分镜描述、资产、Prompt、视频参数与生成状态
-- 基于 Vue Flow 的无限画布支持平移、框选、缩放、自动布局、复制/粘贴、撤销/重做、折叠、标记与视口持久化
-- 无限画布可拖入参考图，接口与故事版共用多模态素材协议
-- 分镜选择的模型、比例与分辨率会持久化，刷新页面不会恢复成其他模型
+- Tích hợp sẵn hệ thống giọng đọc chất lượng cao, đồng thời cho phép tải lên tệp âm thanh mẫu (`.mp3`, `.wav`) của riêng bạn.
+- Hiển thị thời lượng âm thanh thực tế; tích hợp thanh trượt kép (Audio Range Slider) giúp cắt ghép trực tuyến và nghe thử từ điểm bắt đầu cắt.
+- Nhân vật gốc, từng biến thể nhân vật và giọng thuyết minh của dự án đều có thể gán giọng độc lập, lưu cấu hình ngay lập tức.
+- Prompt tự động định dạng `@AudioN tương ứng nhân vật @{TênNhânVật}`, giúp các mô hình video AI nhận diện chuẩn xác chủ nhân giọng nói mà không bị nhầm lẫn.
+- Tương thích đa nền tảng: Seedance hỗ trợ URI nội bộ `asset://`, URL công khai và Base64; MiniMax sử dụng URL/Base64; Wan3 tự động đưa tài nguyên cục bộ lên bộ lưu trữ tạm thời Aliyun Bailian.
 
-### 音色库与声音一致性
+### Sinh Video, Tính Liền Mạch & Hợp Thành Tập Phim
 
-- 内置系统音色，同时支持用户上传 `mp3` / `wav` 参考音频
-- 展示真实音频时长；长音频可通过双滑块在线裁剪并从裁剪起点试听
-- 角色基础形态、每个衍生形态和项目旁白均可独立选择音色，选择后立即保存
-- Prompt 中明确写出 `@音频N 对应角色 @{角色名}`，避免模型混淆声音归属
-- Seedance 支持 `asset://`、公网 URL 与本地 Base64；MiniMax 使用公网 URL/Base64；Wan3 的本地素材通过阿里云百炼临时存储处理
+- Bộ điều hợp video (Video Factory) chuyển đổi tham số tự động dựa trên năng lực thực tế của từng mô hình, không đoán mò qua tên gọi.
+- Hỗ trợ sinh video từ ảnh tham chiếu, sinh từ khung hình đầu - cuối (First & Last Frame), đồng bộ âm thanh môi trường và tiếng động.
+- Sinh hàng loạt: Chọn nhiều phân cảnh cùng lúc, đồng bộ mô hình và thông số; bật chế độ nối khung hình cuối (Last-Frame Continuity) để hệ thống tự động trích xuất khung hình cuối của cảnh trước (qua FFmpeg) làm khung hình đầu cho cảnh tiếp theo, vận hành tự động không cần người trực.
+- Tác vụ nền được máy chủ tự động thăm dò và chốt trạng thái (Reconciliation Loop); bạn có thể tắt máy hoặc đóng tab trình duyệt, server vẫn tiếp tục xử lý và cập nhật cơ sở dữ liệu.
+- Ghép phim tự động: Ghép tất cả các phân cảnh video đã tạo theo đúng thứ tự kịch bản thành một tệp video hoàn chỉnh cho từng tập; tải về trọn vẹn tập phim chỉ với một cú nhấp chuột.
 
-### 视频生成、连续性与成片
+### Đa Mô Hình & Quản Lý Chi Phí Chi Tiết
 
-- 配置驱动的视频工厂，根据模型能力自动转换请求参数，不依赖模型名称猜测
-- 支持参考生视频和首尾帧生视频；参考图片、视频、音频均有明确用途
-- 单镜头可设置模型、时长、比例、分辨率、声音和尾帧衔接
-- 批量生视频可统一模型、比例、分辨率并选择多个分镜；开启尾帧连续生成后按顺序逐个执行，无需值守
-- 供应商未返回尾帧时，后端通过 FFmpeg 从成片提取；下一镜头自动把该图片作为首帧参考
-- 异步任务由后端定时收口，关闭浏览器或刷新页面后仍会继续查询供应商结果
-- 章节成片按分镜顺序合并当前已有视频，可直接下载合并后的完整视频，而非单个分镜
-- 全局媒体库支持图片、视频、音频预览和生成版本管理
+- Tách biệt cấu hình mô hình cho từng tác vụ: Mô hình ngôn ngữ lớn (LLM), Mô hình sinh ảnh (Image), Mô hình sinh video (Video). Cho phép kích hoạt nhiều mô hình song song.
+- Ghi nhận chi tiết từng lần gọi: Số lượng Token, số ảnh / số giây video, vật liệu đầu vào, ảnh chụp bảng giá (pricing snapshot), chiết khấu, tổng tiền và thời gian phản hồi.
+- Bảng điều khiển chi phí (Billing Dashboard): Lọc theo dự án, thống kê tổng hợp và hiển thị nhật ký giao dịch theo trang; hỗ trợ chế độ đội nhóm với cơ chế kiểm tra số dư trước khi chạy và khấu trừ tự động khi hoàn thành.
 
-### 多模型与成本计费
-
-- 文本、图像、视频任务分别配置模型，支持多个配置并行启用与页面选择
-- 模型能力、默认参数、素材限制、协议和价格以后端配置为唯一事实来源
-- 每次调用记录 token、张数/秒数、输入素材、定价快照、折扣、金额和请求时长
-- 支持模型级折扣与优惠前后价格展示；MiniMax H3 支持按输出秒数和输入图片/视频分别计费
-- 成本看板支持项目过滤、汇总与分页流水；团队模式支持余额预检和完成后扣费
-
-## 界面预览
-
-<!--
-  TODO(截图)：以下图片为占位。运行项目后逐页截图，保存到对应路径，
-  替换后删除本注释。截图清单见下一小节。
--->
+## Xem Trước Giao Diện
 
 <table>
   <tr>
-    <td align="center"><b>首页</b></td>
-    <td align="center"><b>项目列表</b></td>
+    <td align="center"><b>Trang Chủ</b></td>
+    <td align="center"><b>Danh Sách Dự Án</b></td>
   </tr>
   <tr>
-    <td><img src="docs/images/screenshots/home.png" alt="首页" width="480"></td>
-    <td><img src="docs/images/screenshots/projects.png" alt="项目列表" width="480"></td>
+    <td><img src="docs/images/screenshots/home.png" alt="Trang Chủ" width="480"></td>
+    <td><img src="docs/images/screenshots/projects.png" alt="Danh Sách Dự Án" width="480"></td>
   </tr>
   <tr>
-    <td align="center"><b>小说详情</b></td>
-    <td align="center"><b>资产管理</b></td>
+    <td align="center"><b>Chi Tiết Tiểu Thuyết</b></td>
+    <td align="center"><b>Quản Lý Tài Sản</b></td>
   </tr>
   <tr>
-    <td><img src="docs/images/screenshots/novel.png" alt="小说详情" width="480"></td>
-    <td><img src="docs/images/screenshots/asset.png" alt="资产管理" width="480"></td>
+    <td><img src="docs/images/screenshots/novel.png" alt="Chi Tiết Tiểu Thuyết" width="480"></td>
+    <td><img src="docs/images/screenshots/asset.png" alt="Quản Lý Tài Sản" width="480"></td>
   </tr>
   <tr>
-    <td align="center"><b>分镜编辑（故事版）</b></td>
-    <td align="center"><b>无限画布工作流</b></td>
+    <td align="center"><b>Biên Tập Phân Cảnh (Storyboard)</b></td>
+    <td align="center"><b>Canvas Vô Cực (Infinite Workbench)</b></td>
   </tr>
   <tr>
-    <td><img src="docs/images/screenshots/storyboard.png" alt="分镜编辑" width="480"></td>
-    <td><img src="docs/images/screenshots/workbench.png" alt="无限画布工作流" width="480"></td>
+    <td><img src="docs/images/screenshots/storyboard.png" alt="Biên Tập Phân Cảnh" width="480"></td>
+    <td><img src="docs/images/screenshots/workbench.png" alt="Canvas Vô Cực" width="480"></td>
   </tr>
   <tr>
-    <td align="center"><b>视频生成</b></td>
-    <td align="center"><b>模型配置</b></td>
+    <td align="center"><b>Kết Xuất & Ghép Video</b></td>
+    <td align="center"><b>Cấu Hình Mô Hình AI</b></td>
   </tr>
   <tr>
-    <td><img src="docs/images/screenshots/video.png" alt="视频生成" width="480"></td>
-    <td><img src="docs/images/screenshots/settings.png" alt="模型配置" width="480"></td>
+    <td><img src="docs/images/screenshots/video.png" alt="Kết Xuất Video" width="480"></td>
+    <td><img src="docs/images/screenshots/settings.png" alt="Cấu Hình Mô Hình" width="480"></td>
   </tr>
   <tr>
-    <td align="center" colspan="2"><b>成本看板</b></td>
+    <td align="center" colspan="2"><b>Bảng Quản Lý Chi Phí</b></td>
   </tr>
   <tr>
-    <td colspan="2"><img src="docs/images/screenshots/billing.png" alt="成本看板" width="960"></td>
+    <td colspan="2"><img src="docs/images/screenshots/billing.png" alt="Bảng Quản Lý Chi Phí" width="960"></td>
   </tr>
 </table>
 
-## 快速开始
+## Bắt Đầu Nhanh
 
-### 环境要求
+### Yêu Cầu Hệ Thống
 
-- Docker 20.10+（含 Docker Compose）
-- 或本地开发：Python 3.12+、Node.js 20+、[uv](https://docs.astral.sh/uv/)
-- FFmpeg / ffprobe（章节视频合并、重制镜头切分、模型输入准备、媒体探测和尾帧兜底提取）
+- **Docker 20.10+** (kèm Docker Compose v2)
+- Hoặc phát triển cục bộ: **Python 3.12+**, **Node.js 20+**, công cụ [uv](https://docs.astral.sh/uv/)
+- **FFmpeg / ffprobe**: Cần thiết cho việc ghép nối video, chia tách cảnh, trích xuất khung hình cuối và xử lý âm thanh (Đã tích hợp sẵn trong Docker image).
 
-### 方式一：Docker 部署（推荐）
+---
 
+### Cách 1: Triển Khai Bằng Docker (Khuyến Nghị)
+
+Đây là cách nhanh nhất và tiện lợi nhất để chạy NovelVids trên mọi nền tảng (CachyOS / Arch Linux, Ubuntu / Debian, macOS, Windows).
+
+#### 1. Chuẩn bị môi trường trên CachyOS / Arch Linux:
+Nếu bạn đang dùng CachyOS hoặc bản phân phối hệ Arch:
 ```bash
-# 克隆项目
-git clone https://github.com/Anning01/novelvids.git
-cd novelvids
+# Cài đặt Docker và Docker Compose nếu chưa có
+sudo pacman -S docker docker-compose
 
-# 一键构建并启动（前端 + 后端）
+# Khởi động và kích hoạt Docker service
+sudo systemctl enable --now docker
+
+# Thêm người dùng hiện tại vào nhóm docker (để chạy không cần sudo)
+sudo usermod -aG docker $USER
+# Áp dụng nhóm mới (hoặc đăng xuất rồi đăng nhập lại)
+newgrp docker
+```
+
+#### 2. Clone mã nguồn và khởi chạy:
+```bash
+# Clone repository
+git clone https://github.com/Henrysido/novelvidsvn.git
+cd novelvidsvn
+
+# Tạo tệp cấu hình từ bản mẫu
+cp .env.example .env
+
+# Khởi động dịch vụ (tự động build cả Frontend và Backend)
 docker compose up -d --build
 ```
 
-启动完成后：
+#### 3. Truy cập và sử dụng:
+- **Giao diện Web:** <http://localhost:8080>
+- **Tài liệu API (Swagger UI):** <http://localhost:8080/docs>
+- Mặc định toàn bộ dữ liệu sẽ được lưu trữ cục bộ tại thư mục `./data` (cơ sở dữ liệu SQLite) và `./media` (hình ảnh, video, âm thanh). Bạn không lo mất dữ liệu khi khởi động lại container.
 
-- 访问应用：<http://localhost:8080>
-- 访问 API 文档：<http://localhost:8080/docs>
-- 默认数据持久化在 `./data`（SQLite 数据库）与 `./media`（图片、视频、音频）目录；生产环境可通过环境变量切换 PostgreSQL 与阿里云 OSS
+> **Quan trọng:** Sau khi đăng nhập vào hệ thống lần đầu, hãy truy cập ngay vào mục **「Cài đặt / Cấu hình mô hình」** (`/settings`) để điền API Key cho các mô hình AI (LLM, Ảnh, Video) của bạn.
 
-> 首次启动后，请先到「设置 / 模型配置」页填入你的 AI 模型 API Key（见[模型配置](#模型配置)），再开始生成。
-
-停止 / 更新：
-
+#### 4. Dừng và cập nhật hệ thống:
 ```bash
-docker compose down          # 停止并删除容器（数据保留在 ./data 与 ./media）
-docker compose up -d --build # 重新构建并启动
+# Dừng container (dữ liệu tại ./data và ./media vẫn được giữ nguyên)
+docker compose down
+
+# Cập nhật code mới nhất và build lại
+git pull origin main
+docker compose up -d --build
 ```
 
-### 方式二：本地开发
+---
 
-#### 后端
+### Cách 2: Phát Triển Cục Bộ (Local Development)
+
+#### Backend (Python FastAPI)
 
 ```bash
-# 安装依赖（使用 uv，保留 uv.lock）
+# Cài đặt uv nếu chưa có
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Đồng bộ thư viện phụ thuộc (sử dụng uv.lock)
 uv sync --dev
 
-# 启动后端（默认 0.0.0.0:9000，与前端代理配置一致）
+# Khởi chạy Backend (mặc định cổng 9000)
 make dev PORT=9000
 ```
 
-#### 前端
+#### Frontend (Vue 3 + TypeScript + Vite)
 
 ```bash
 cd web
 
-# 安装依赖（使用 package-lock.json）
+# Cài đặt thư viện phụ thuộc (sử dụng package-lock.json)
 npm ci
 
-# 启动开发服务器（自动代理 /api 与 /media 到后端）
+# Khởi chạy dev server (tự động proxy các yêu cầu /api và /media sang backend cổng 9000)
 npm run dev
 ```
 
-访问 <http://localhost:3000> 即可使用。
+Truy cập ứng dụng tại: <http://localhost:3000>.
 
-## 登录与团队功能（可选开关）
+---
 
-项目内置一套**开关式**登录与团队能力，默认关闭 —— docker 部署即用，与无鉴权版本完全一致：
+## Tính Năng Đăng Nhập & Đội Nhóm (Tùy Chọn)
 
-- 设置环境变量 `AUTH_ENABLED=true` 后，必须登录才能使用，并默认启用团队功能：
-  - 四级角色：超级管理员 / 团队管理员 / 创作者 / 查看者
-  - 团队数据隔离、成员管理、团队管理（余额充值）
-  - 模型配置支持「官方配置」（Key 不可见）与「团队自定义」
-  - 团队余额：任务提交预检 + 完成自动扣费，欠费拦截
-  - 一期为账号密码登录（`SUPER_ADMIN_USERNAME/PASSWORD` 引导超管），微信公众号扫码登录为二期接入点
-- 完整部署说明（环境变量、HTTPS 反代示例、微信接入点）见 [docs/team-auth-deployment.md](docs/team-auth-deployment.md)
+Hệ thống tích hợp sẵn cơ chế xác thực và phân quyền đội nhóm theo dạng **công tắc (toggle)**, mặc định tắt (triển khai Docker dùng ngay như một ứng dụng đơn lẻ, không bắt đăng nhập):
 
-## 模型配置
+- Khi đặt biến môi trường `AUTH_ENABLED=true` trong `.env`:
+  - Bắt buộc đăng nhập để sử dụng.
+  - Phân cấp 4 vai trò rõ ràng: **Super Admin (Siêu quản trị viên)** / **Team Admin (Quản trị viên đội nhóm)** / **Creator (Người sáng tạo)** / **Viewer (Người xem)**.
+  - Cô lập dữ liệu giữa các đội nhóm, quản lý thành viên, nạp và quản lý số dư.
+  - Cấu hình mô hình hỗ trợ cả "Cấu hình chính thức của hệ thống" (ẩn Key) và "Cấu hình riêng của đội nhóm".
+  - Quản lý số dư: Kiểm tra trước khi gửi tác vụ và tự động trừ tiền sau khi hoàn tất; chặn thực hiện khi hết số dư.
+  - Tài khoản Super Admin được khởi tạo qua 2 biến môi trường `SUPER_ADMIN_USERNAME` và `SUPER_ADMIN_PASSWORD`.
+- Chi tiết hướng dẫn xem tại [docs/team-auth-deployment.md](docs/team-auth-deployment.md).
 
-AI 模型配置保存在数据库中，通过 Web 界面的「**设置 / 模型配置**」页（`/settings`）进行增删改、定价、折扣与启停，无需把供应商密钥写入源码。按任务类型配置，支持三类模型：
+---
 
-### LLM 大模型（实体提取 / 分镜 / 项目分析 / 重制拆解）
+## Cấu Hình Mô Hình AI
 
-采用 **OpenAI 兼容协议**，可接入 OpenAI、DeepSeek、豆包、月之暗面等。一个模型可同时勾选多个“能力用途”；只有支持视频输入的多模态模型才应勾选“重制”：
+Toàn bộ cấu hình mô hình AI được lưu trữ trực tiếp trong cơ sở dữ liệu và quản lý thông qua giao diện Web tại trang **「Cài đặt / Cấu hình mô hình」** (`/settings`). Bạn không cần phải sửa hay nhúng API Key vào mã nguồn.
 
-| 字段 | 说明 |
-|------|------|
-| 名称 | 配置显示名，如 `deepseek-v3` |
-| API 地址 | 供应商 base_url，如 `https://api.deepseek.com/v1` |
-| API Key | 你的密钥 |
-| 模型名称 | 如 `deepseek-chat` |
-| 接口协议 | `openai_compatible` |
-| 支持 JSON 输出 | 分镜等结构化任务建议开启 |
-| 能力用途 | 可多选内容理解、分镜规划、项目分析、重制；“重制”要求模型支持视频输入 |
-| 思考模式 | 可按模型配置开启或关闭；豆包关闭时使用方舟兼容的 `thinking=disabled` |
-| 并发与超时 | 重制镜头并发读取模型配置；单次视频理解请求最长等待 10 分钟 |
+### 1. Mô Hình LLM (Trích xuất thực thể / Phân cảnh / Phân tích dự án / Remake)
+Hỗ trợ giao thức **chuẩn tương thích OpenAI (OpenAI-compatible)**, dễ dàng kết nối tới OpenAI (GPT-4o), DeepSeek (V3/R1), Doubao (Volcengine Ark), Moonshot (Kimi), Qwen, v.v.
 
-### 图像模型（参考图生成）
+| Trường thông tin | Hướng dẫn |
+|---|---|
+| **Tên hiển thị** | Tên cấu hình gợi nhớ, ví dụ: `deepseek-v3` hoặc `gpt-4o` |
+| **API Base URL** | Địa chỉ base URL của nhà cung cấp, ví dụ: `https://api.deepseek.com/v1` |
+| **API Key** | Khóa bí mật của bạn |
+| **Tên mô hình** | Tên định danh gọi API, ví dụ: `deepseek-chat` |
+| **Giao thức** | Chọn `openai_compatible` |
+| **Hỗ trợ JSON Output** | Khuyến nghị bật đối với các tác vụ phân cảnh để nhận cấu trúc JSON chuẩn |
+| **Mục đích sử dụng** | Có thể chọn nhiều: Hiểu nội dung, Lập kế hoạch phân cảnh, Phân tích dự án, Tái chế (Remake). *Lưu ý: Tác vụ "Tái chế" yêu cầu mô hình có hỗ trợ đọc video (multimodal).* |
+| **Chế độ suy nghĩ (Thinking Mode)** | Cho phép bật/tắt tùy theo mô hình (với Doubao tự động gửi cờ `thinking=disabled` khi tắt) |
+| **Độ trễ & Đồng thời** | Tùy chỉnh số lượng phân tích cảnh đồng thời; hỗ trợ thời gian chờ tối đa 10 phút cho mỗi yêu cầu video |
 
-| 模型类型 | 说明 | 协议 |
-|------|------|------|
-| Doubao Seedream 5.0 Lite / Pro | 豆包生图 | `volcengine_ark` / `openrouter_compatible` |
-| GPT Image 2 | OpenAI 生图 | `openai_compatible` / `openrouter_compatible` |
+### 2. Mô Hình Sinh Ảnh (Image Generation)
 
-### 视频模型（视频合成）
+| Loại mô hình | Nhà cung cấp | Giao thức |
+|---|---|---|
+| **Doubao Seedream 5.0 Lite / Pro** | ByteDance Volcengine Ark | `volcengine_ark` / `openrouter_compatible` |
+| **GPT Image 2** | OpenAI | `openai_compatible` / `openrouter_compatible` |
 
-视频请求统一进入模型工厂，再由所选配置的 `video_model_type` 选择适配器并校验素材、时长、比例、分辨率与接口协议。
+### 3. Mô Hình Sinh Video (Video Generation)
 
-| 模型类型 | 主要能力 | 协议 |
-|------|------|------|
-| Doubao Seedance 2.0 / Fast / Mini | 参考图/视频/音频、首尾帧、同步声音，最长 15 秒 | `volcengine_ark` |
-| Doubao Seedance 2.5 | 更多参考素材、最长 30 秒、系统音频素材 `asset://` | `volcengine_ark` |
-| MiniMax H3 | 768P / 2K、参考图/视频/音频、首尾帧 | `minimax` |
-| Wan3 | 文生/图生/首尾帧/全能参考，支持百炼临时素材上传 | `dashscope` |
+| Loại mô hình | Khả năng chính | Giao thức |
+|---|---|---|
+| **Doubao Seedance 2.0 / Fast / Mini** | Ảnh/Video/Âm thanh tham chiếu, Nối khung hình đầu-cuối, Âm thanh đồng bộ, Tối đa 15s | `volcengine_ark` |
+| **Doubao Seedance 2.5** | Đa dạng tư liệu tham chiếu hơn, Thời lượng tối đa 30s, Âm thanh hệ thống qua `asset://` | `volcengine_ark` |
+| **MiniMax H3** | Độ phân giải 768P / 2K, Ảnh/Video/Âm thanh tham chiếu, Nối khung hình đầu-cuối | `minimax` |
+| **Wan3 (Aliyun DashScope)** | Văn bản sinh video / Ảnh sinh video / Nối khung hình đầu-cuối / Tham chiếu toàn diện | `dashscope` |
 
-> 每种任务类型可同时启用多个配置。前端只展示当前模型实际支持的参数；供应商不返回尾帧时由 FFmpeg 兜底，不需要在适配器中伪造能力。
+> Bạn có thể bật đồng thời nhiều cấu hình cho mỗi loại tác vụ. Giao diện người dùng sẽ tự động phát hiện và chỉ hiển thị các tùy chọn thông số mà mô hình đã chọn thực sự hỗ trợ.
 
-## 数据库与媒体存储
+---
 
-数据库和媒体存储完全通过环境变量选择，不需要修改业务代码。可复制 [`.env.example`](.env.example) 为 `.env` 后按环境填写；不要提交真实密钥。
+## Cơ Sở Dữ Liệu & Lưu Trữ Media
 
-### SQLite 与 PostgreSQL
+Tất cả cấu hình lưu trữ được điều khiển thông qua tệp `.env`, không cần sửa mã nguồn.
 
-开发环境默认使用 SQLite：
+### SQLite & PostgreSQL
 
+Mặc định chạy phát triển cục bộ và Docker cơ bản với **SQLite**:
 ```dotenv
 DATABASE_URL=sqlite://./data/novelvids.db
 ```
 
-生产环境可切换 PostgreSQL：
-
+Chuyển sang **PostgreSQL** cho môi trường sản xuất chịu tải lớn:
 ```dotenv
-DATABASE_URL=postgres://novelvids:your-password@127.0.0.1:5432/novelvids
+DATABASE_URL=postgres://novelvids:mat-khau-cua-ban@127.0.0.1:5432/novelvids
 ```
+Khi khởi động, ứng dụng tự động kiểm tra và khởi tạo các bảng dữ liệu còn thiếu một cách an toàn mà không làm mất dữ liệu hiện có.
 
-应用启动时会以 `safe=True` 创建缺失表并执行兼容初始化，不会删除已有表。正式迁移数据前仍应备份数据库并在停写窗口执行迁移。
+### Lưu Trữ Cục Bộ (Local) & Aliyun OSS
 
-### 本地媒体与阿里云 OSS
-
-默认媒体文件写入本地目录：
-
+Mặc định lưu trữ tệp tin đa phương tiện trực tiếp trên ổ cứng:
 ```dotenv
 MEDIA_PATH=./media
 OSS_PROVIDER=local
 ```
 
-启用阿里云 OSS：
-
+Nếu muốn kết nối dịch vụ lưu trữ đám mây Aliyun OSS:
 ```dotenv
 OSS_PROVIDER=aliyun
-OSS_BUCKET=your-bucket
+OSS_BUCKET=ten-bucket-cua-ban
 OSS_ENDPOINT=oss-cn-guangzhou.aliyuncs.com
 OSS_INTERNAL_ENDPOINT=oss-cn-guangzhou-internal.aliyuncs.com
-OSS_PUBLIC_BASE=https://media.example.com
-OSS_ACCESS_KEY_ID=
-OSS_ACCESS_KEY_SECRET=
+OSS_PUBLIC_BASE=https://media.domaincuaban.com
+OSS_ACCESS_KEY_ID=your_access_key
+OSS_ACCESS_KEY_SECRET=your_secret_key
 ```
 
-- 浏览器通过签名策略直传大文件，避免书稿、参考视频和音频绕行应用服务器
-- 服务端下载、裁剪、章节合并、尾帧提取及再次上传统一使用 `OSS_INTERNAL_ENDPOINT`
-- 对外提交给模型和浏览器预览时使用公网地址或签名 URL；数据库尽量保存稳定对象 key
-- `OSS_PUBLIC_BASE` 可填写 CDN/CNAME；留空时使用 Bucket 与公网 Endpoint 组合地址
-
-项目封面会保留原图，并自动生成列表缩略图与详情预览图。升级已有环境后，执行一次幂等回填：
-
-```bash
-uv run python -m scripts.backfill_media_derivatives
-```
-
-本地媒体会在原图旁生成 WebP 派生图；OSS 模式通过 `OSS_INTERNAL_ENDPOINT` 读写，并为派生图设置长期不可变缓存。该命令也会为设定资产图片生成缩略图，并为历史生成视频提取首帧海报。
-
-### 视频任务自动收口
+### Tự Động Thăm Dò & Cập Nhật Trạng Thái Video (Reconciliation Loop)
 
 ```dotenv
 VIDEO_RECONCILE_INTERVAL_SECONDS=30
 VIDEO_RECONCILE_BATCH_SIZE=50
 ```
+Máy chủ định kỳ mỗi 30 giây tự động kiểm tra trạng thái các tác vụ video đang xử lý từ nhà cung cấp. Người dùng có thể yên tâm đóng trình duyệt; khi video tạo xong, hệ thống sẽ tự động tải về, trích xuất khung hình cuối và kích hoạt phân cảnh kế tiếp.
 
-后端会持续查询排队中和生成中的供应商任务。即使用户关闭故事版页面，任务完成、计费、尾帧提取与下一镜头注入仍会继续执行。
+---
 
-## 项目结构
+## Cấu Trúc Dự Án
 
 ```
 novelvids/
-├── api/                    # API 层 —— RESTful 接口定义（/api 前缀）
-├── controllers/            # 控制层 —— 业务逻辑编排
-├── models/                 # 数据模型层 —— Tortoise ORM 模型
-├── schemas/                # 数据校验层 —— Pydantic Schemas
-├── services/               # 服务层 —— AI/图像/视频等外部能力调用
-│   ├── ai_task_executor.py # AI 任务调度执行器
-│   ├── extraction/         # 实体提取服务
-│   ├── storyboard/         # 分镜生成服务
-│   ├── reference/          # 参考图生成服务
-│   ├── remake/             # 重制工坊上传、拆解、SSE 进度、持久化与历史项目复用
-│   ├── image_generation/   # 生图能力与协议适配
-│   ├── video/              # 视频工厂、模型能力、任务收口、合并与尾帧服务
-│   ├── oss/                # 本地 / 阿里云 OSS 统一存储接口
-│   └── audio_references.py # 音色上传、裁剪与持久化
-├── prompts/                # Prompt 模板 —— 集中存放，禁止内联大段文本
-├── seeds/                  # 种子数据（音频、数字人）
-├── scripts/                # 运维脚本（如资产引用回填）
-├── test/                   # 后端测试套件（api/controllers/models/services）
+├── api/                    # Tầng API —— Định nghĩa các endpoint RESTful (/api)
+├── controllers/            # Tầng Điều khiển —— Xử lý và điều phối logic nghiệp vụ
+├── models/                 # Tầng Mô hình Dữ liệu —— Tortoise ORM Models
+├── schemas/                # Tầng Xác thực Dữ liệu —— Pydantic Schemas
+├── services/               # Tầng Dịch vụ —— Tương tác với AI, hình ảnh, video & lưu trữ
+│   ├── ai_task_executor.py # Điều phối và thực thi tác vụ AI bất đồng bộ
+│   ├── extraction/         # Dịch vụ trích xuất thực thể từ tiểu thuyết
+│   ├── storyboard/         # Dịch vụ tạo và quản lý kịch bản phân cảnh
+│   ├── reference/          # Dịch vụ tạo ảnh tham chiếu cho nhân vật & bối cảnh
+│   ├── remake/             # Dịch vụ xử lý xưởng tái chế (Remake), chia cảnh, SSE
+│   ├── image_generation/   # Bộ điều hợp sinh ảnh và xử lý giao thức
+│   ├── video/              # Video Factory, kiểm tra năng lực model, ghép nối & trích frame
+│   ├── oss/                # Giao diện lưu trữ thống nhất (Cục bộ / Aliyun OSS)
+│   └── audio_references.py # Tải lên, cắt gọn và lưu trữ âm thanh tham chiếu
+├── prompts/                # Mẫu Prompt AI —— Tập trung quản lý, không viết cứng trong code
+├── seeds/                  # Dữ liệu hạt giống khởi tạo (âm thanh, nhân vật số)
+├── scripts/                # Kịch bản bảo trì vận hành
+├── test/                   # Bộ kiểm thử Backend (Pytest)
 │
-├── web/                    # 前端应用 —— Vue 3 + TypeScript + Vite
+├── web/                    # Ứng dụng Giao diện Người dùng (Frontend: Vue 3 + TypeScript + Vite)
 │   ├── src/
-│   │   ├── pages/          # 页面组件
-│   │   ├── features/workbench/  # 无限画布工作台
-│   │   ├── components/     # 通用组件
-│   │   ├── shared/         # 共享工具与状态
-│   │   ├── api.ts          # API 调用层
-│   │   └── router.ts       # 路由
-│   ├── public/             # 静态资源
+│   │   ├── pages/          # Các trang giao diện chính
+│   │   ├── features/workbench/  # Không gian làm việc Canvas vô cực
+│   │   ├── components/     # Các component dùng chung
+│   │   ├── shared/         # Tiện ích, quản lý trạng thái, theme, i18n
+│   │   ├── locales/        # Tệp ngôn ngữ đa quốc gia (Tiếng Việt vi-VN, Tiếng Trung zh-CN)
+│   │   ├── api.ts          # Giao thức gọi API Backend
+│   │   └── router.ts       # Định tuyến Vue Router
+│   ├── public/             # Tài nguyên tĩnh
 │   ├── index.html
 │   └── package.json
 │
-├── Dockerfile              # 后端镜像
-├── docker-compose.yml      # 一键部署编排
-├── .env.example            # SQLite/PostgreSQL、OSS、鉴权等环境变量示例
-├── pyproject.toml          # Python 项目配置
-└── README.md
+├── Dockerfile              # Dockerfile đóng gói Backend
+├── docker-compose.yml      # Cấu hình khởi chạy toàn diện một bước
+├── .env.example            # Tệp mẫu các biến môi trường
+├── pyproject.toml          # Cấu hình dự án Python & Quản lý thư viện
+└── README.md               # Tài liệu hướng dẫn sử dụng tiếng Việt
 ```
 
-## 技术栈
+---
 
-### 后端
+## Tech Stack
 
-| 技术 | 用途 |
-|------|------|
-| **FastAPI** | 高性能异步 Web 框架 |
-| **Tortoise ORM** | 异步 ORM，支持 SQLite / PostgreSQL |
-| **asyncpg / aiosqlite** | PostgreSQL / SQLite 异步驱动 |
-| **Pydantic** | 数据校验与序列化 |
-| **OpenAI SDK** | AI 模型统一调用接口 |
-| **HTTPX** | Seedance、MiniMax、Wan3 等供应商请求与媒体传输 |
-| **PySceneDetect** | 重制来源视频的镜头边界检测与拆分 |
-| **FFmpeg** | 章节合并、音视频探测和尾帧兜底提取 |
-| **Uvicorn** | ASGI 服务器 |
-| **uv** | 依赖与虚拟环境管理 |
+### Backend
 
-### 前端
+| Công nghệ | Mục đích sử dụng |
+|---|---|
+| **FastAPI** | Framework Web bất đồng bộ hiệu năng cao |
+| **Tortoise ORM** | ORM Async mạnh mẽ, hỗ trợ SQLite và PostgreSQL |
+| **asyncpg / aiosqlite** | Trình điều khiển kết nối cơ sở dữ liệu bất đồng bộ |
+| **Pydantic v2** | Định nghĩa cấu trúc, xác thực và chuẩn hóa dữ liệu |
+| **OpenAI SDK** | Giao diện chuẩn gọi các mô hình AI tương thích |
+| **HTTPX** | Xử lý yêu cầu HTTP đa luồng tới các nhà cung cấp Seedance, MiniMax, Wan3 |
+| **PySceneDetect** | Phát hiện ranh giới chuyển cảnh video thông minh trong xưởng Remake |
+| **FFmpeg** | Ghép nối tập phim, xử lý âm thanh và trích xuất khung hình cuối |
+| **Uvicorn** | Máy chủ ASGI tiêu chuẩn công nghiệp |
+| **uv** | Trình quản lý môi trường ảo và thư viện Python siêu nhanh |
 
-| 技术 | 用途 |
-|------|------|
-| **Vue 3** | UI 框架（Composition API） |
-| **TypeScript** | 类型安全 |
-| **Vite** | 构建工具 |
-| **Pinia** | 状态管理 |
-| **Vue Flow** | 无限画布工作台 |
-| **Vue Router** | 路由管理 |
-| **Vitest** | 单元测试 |
+### Frontend
 
-## 测试
+| Công nghệ | Mục đích sử dụng |
+|---|---|
+| **Vue 3** | Framework giao diện người dùng hiện đại (Composition API) |
+| **TypeScript** | Đảm bảo an toàn kiểu dữ liệu chặt chẽ |
+| **Vite** | Công cụ build và dev server siêu tốc |
+| **Pinia** | Quản lý trạng thái ứng dụng |
+| **Vue Flow** | Nền tảng dựng Canvas vô cực tương tác cao |
+| **Vue Router** | Điều hướng trang mượt mà (SPA) |
+| **vue-i18n** | Hỗ trợ đa ngôn ngữ hoàn chỉnh (mặc định Tiếng Việt `vi-VN`) |
+| **Vitest** | Bộ kiểm thử đơn vị và tích hợp giao diện (137 suites, 451 tests) |
 
-后端使用 pytest（含覆盖率报告），前端使用 Vitest：
+---
+
+## Kiểm Thử (Testing)
+
+Dự án được bảo vệ nghiêm ngặt bởi bộ kiểm thử tự động toàn diện:
 
 ```bash
-# 后端全部测试
+# Chạy toàn bộ kiểm thử Backend (Pytest)
 uv run pytest
 
-# 后端定向测试
+# Chạy kiểm thử dịch vụ phân cảnh Backend
 uv run pytest test/test_services/test_storyboard_handler.py -q
 
-# 前端全部测试
+# Chạy toàn bộ kiểm thử Frontend (Vitest - 137 test suites, 451 tests)
 cd web && npm run test
 
-# 前端类型检查与构建
+# Kiểm tra an toàn kiểu dữ liệu TypeScript và build sản phẩm Frontend
 cd web && npm run typecheck && npm run build
 ```
 
-## 许可协议
+---
 
-本项目采用 [知识共享 署名-非商业性使用 4.0 国际许可协议（CC BY-NC 4.0）](LICENSE) 授权。
+## Giấy Phép Bản Quyền (License)
 
-- ✅ **学习、研究、个人使用**：免费，无需授权。
-- ✅ **转载、引用、二次开发（非商用）**：允许，但必须署名（保留原作者与项目链接）。
-- ❌ **商业使用**：禁止。任何将本项目或其衍生作品用于直接或间接商业目的（包括但不限于售卖、SaaS 化对外提供服务、付费定制、广告盈利等），均需事先取得作者的**书面授权**。
-- ⚠️ **未经授权商用，将依法追究法律责任。**
+Dự án gốc được phát hành theo giấy phép [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](LICENSE).
 
-> 需要商用授权？请联系作者 📫 Email: anningforchina@gmail.com 洽谈。
-
-## Star 增长
-
-<!-- star-growth-card:start -->
-<p align="center">
-  <a href="https://github.com/Anning01/novelvids/stargazers">
-    <img src="https://novelvids-star-history.864399407.workers.dev/card.svg" width="920" alt="猫影短剧 GitHub Star 增长曲线">
-  </a>
-</p>
-<!-- star-growth-card:end -->
+- ✅ **Học tập, nghiên cứu và sử dụng cá nhân**: Hoàn toàn miễn phí, không cần xin phép.
+- ✅ **Trích dẫn, chia sẻ và phát triển thứ cấp (Phi thương mại)**: Được phép, nhưng bắt buộc phải ghi rõ nguồn gốc (ghi nhận tác giả gốc và liên kết dự án).
+- ❌ **Sử dụng thương mại**: Bị nghiêm cấm. Bất kỳ hình thức sử dụng dự án này hoặc các sản phẩm phái sinh vào mục đích thương mại trực tiếp hoặc gián tiếp (bao gồm bán lại, triển khai dịch vụ SaaS có thu phí, tùy biến trả phí, gắn quảng cáo kiếm tiền, v.v.) đều phải có sự **đồng ý bằng văn bản** từ tác giả gốc.
 
 ---
 
 <p align="center">
-  <sub>Built with passion by <a href="https://github.com/Anning01">Anning</a></sub>
+  <sub>Bản Việt hóa và tối ưu hóa vận hành bởi <a href="https://github.com/Henrysido/novelvidsvn">Henrysido</a> &bull; Phát triển từ dự án gốc của <a href="https://github.com/Anning01/novelvids">Anning</a></sub>
 </p>

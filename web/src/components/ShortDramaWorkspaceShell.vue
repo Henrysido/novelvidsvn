@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ArrowLeft, BookOpenText, Clapperboard, Film, Settings2, Video } from 'lucide-vue-next'
 import AppButton from '@/components/AppButton.vue'
 import ShortDramaEpisodeRail from '@/components/ShortDramaEpisodeRail.vue'
@@ -38,12 +39,16 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const router = useRouter()
-const phases = computed(() => [
-  ...(props.creationMode === 'agent' ? [{ key: 'script' as const, label: '剧本', icon: BookOpenText }] : []),
-  { key: 'settings' as const, label: '设定', icon: Settings2 },
-  { key: 'storyboard' as const, label: '分镜', icon: Clapperboard },
-  { key: 'video' as const, label: '视频', icon: Video, disabled: !props.videoEnabled },
-])
+const { locale } = useI18n()
+const phases = computed(() => {
+  const isVi = locale.value === 'vi-VN'
+  return [
+    ...(props.creationMode === 'agent' ? [{ key: 'script' as const, label: isVi ? 'Kịch bản' : '剧本', icon: BookOpenText }] : []),
+    { key: 'settings' as const, label: isVi ? 'Thiết lập' : '设定', icon: Settings2 },
+    { key: 'storyboard' as const, label: isVi ? 'Phân cảnh' : '分镜', icon: Clapperboard },
+    { key: 'video' as const, label: isVi ? 'Video' : '视频', icon: Video, disabled: !props.videoEnabled },
+  ]
+})
 const hasEpisodeRail = computed(() => props.showEpisodeRail && !props.immersive && props.activePhase !== 'script')
 
 function phasePath(phase: ShortDramaPhase) {
@@ -75,8 +80,8 @@ function selectPhase(phase: ShortDramaPhase, disabled = false) {
           variant="ghost"
           size="sm"
           icon-only
-          aria-label="返回项目"
-          title="返回项目"
+          :aria-label="locale === 'vi-VN' ? 'Quay lại dự án' : '返回项目'"
+          :title="locale === 'vi-VN' ? 'Quay lại dự án' : '返回项目'"
           @click="router.push('/projects')"
         >
           <ArrowLeft :size="18" />
@@ -89,7 +94,7 @@ function selectPhase(phase: ShortDramaPhase, disabled = false) {
         </div>
       </div>
 
-      <nav v-if="!immersive" class="short-drama-phase-nav" aria-label="短剧制作流程">
+      <nav v-if="!immersive" class="short-drama-phase-nav" :aria-label="locale === 'vi-VN' ? 'Quy trình sản xuất phim ngắn' : '短剧制作流程'">
         <template v-for="(phase, index) in phases" :key="phase.key">
           <span v-if="index" class="short-drama-phase-line" />
           <AppButton

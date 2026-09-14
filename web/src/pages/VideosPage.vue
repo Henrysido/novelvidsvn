@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Box,
   Check,
@@ -29,11 +30,15 @@ type AssetScope = 'public' | 'project'
 type PublicCategory = 'character' | 'audio'
 type ProjectCategory = 'character' | 'scene' | 'prop'
 
+const { locale } = useI18n()
 const scope = ref<AssetScope>('public')
-const scopeTabs: AppTabItem[] = [
-  { value: 'public', label: '公共资产', icon: Library },
-  { value: 'project', label: '项目资产', icon: FolderKanban },
-]
+const scopeTabs = computed<AppTabItem[]>(() => {
+  const isVi = locale.value === 'vi-VN'
+  return [
+    { value: 'public', label: isVi ? 'Tài nguyên công khai' : '公共资产', icon: Library },
+    { value: 'project', label: isVi ? 'Tài nguyên dự án' : '项目资产', icon: FolderKanban },
+  ]
+})
 const publicCategory = ref<PublicCategory>('character')
 const projectCategory = ref<ProjectCategory>('character')
 const search = ref('')
@@ -56,20 +61,26 @@ let loadMoreObserver: IntersectionObserver | null = null
 let publicSearchTimer: ReturnType<typeof setTimeout> | undefined
 let publicQueryVersion = 0
 
-const publicCategories = [
-  { value: 'character', label: '角色库', icon: UsersRound },
-  { value: 'audio', label: '音频库', icon: Volume2 },
-] satisfies Array<AppTabItem & { value: PublicCategory }>
+const publicCategories = computed(() => {
+  const isVi = locale.value === 'vi-VN'
+  return [
+    { value: 'character' as PublicCategory, label: isVi ? 'Kho nhân vật' : '角色库', icon: UsersRound },
+    { value: 'audio' as PublicCategory, label: isVi ? 'Kho âm thanh' : '音频库', icon: Volume2 },
+  ]
+})
 
-const projectCategories = [
-  { value: 'character', label: '角色', icon: UserRound, type: AssetTypeEnum.PERSON },
-  { value: 'scene', label: '场景', icon: Map, type: AssetTypeEnum.SCENE },
-  { value: 'prop', label: '道具', icon: Box, type: AssetTypeEnum.ITEM },
-] satisfies Array<AppTabItem & { value: ProjectCategory, type: AssetTypeEnum }>
+const projectCategories = computed(() => {
+  const isVi = locale.value === 'vi-VN'
+  return [
+    { value: 'character' as ProjectCategory, label: isVi ? 'Nhân vật' : '角色', icon: UserRound, type: AssetTypeEnum.PERSON },
+    { value: 'scene' as ProjectCategory, label: isVi ? 'Bối cảnh' : '场景', icon: Map, type: AssetTypeEnum.SCENE },
+    { value: 'prop' as ProjectCategory, label: isVi ? 'Đạo cụ' : '道具', icon: Box, type: AssetTypeEnum.ITEM },
+  ]
+})
 
 const projectOptions = computed(() => projects.value.map(item => ({ value: String(item.id), label: item.name })))
 const selectedProject = computed(() => projects.value.find(item => String(item.id) === selectedProjectId.value))
-const activeProjectType = computed(() => projectCategories.find(item => item.value === projectCategory.value)?.type ?? AssetTypeEnum.PERSON)
+const activeProjectType = computed(() => projectCategories.value.find(item => item.value === projectCategory.value)?.type ?? AssetTypeEnum.PERSON)
 
 const filteredCharacters = computed(() => {
   const keyword = search.value.trim().toLowerCase()
@@ -108,29 +119,33 @@ function genderMatches(value: string, gender: string) {
   return true
 }
 
-const genderOptions = [
-  { value: 'male', label: '男' },
-  { value: 'female', label: '女' },
-]
+const genderOptions = computed(() => {
+  const isVi = locale.value === 'vi-VN'
+  return [
+    { value: 'male', label: isVi ? 'Nam' : '男' },
+    { value: 'female', label: isVi ? 'Nữ' : '女' },
+  ]
+})
 
 function uniqueOptions(values: Array<string | undefined>, selected = '') {
   return [...new Set([...values, selected].filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, 'zh-CN')).map(value => ({ value, label: value }))
 }
 
 const activeFilterDefinitions = computed<SearchFilterDefinition[]>(() => {
-  if (scope.value === 'project') return projectOptions.value.length ? [{ key: 'project', label: '项目', options: projectOptions.value, width: 220, required: true }] : []
-  if (publicCategory.value === 'audio') return [{ key: 'gender', label: '性别', options: genderOptions }]
+  const isVi = locale.value === 'vi-VN'
+  if (scope.value === 'project') return projectOptions.value.length ? [{ key: 'project', label: isVi ? 'Dự án' : '项目', options: projectOptions.value, width: 220, required: true }] : []
+  if (publicCategory.value === 'audio') return [{ key: 'gender', label: isVi ? 'Giới tính' : '性别', options: genderOptions.value }]
   return [
-    { key: 'country', label: '国家', options: uniqueOptions(digitalHumans.value.map(item => item.country), characterFilterValues.value.country) },
-    { key: 'gender', label: '性别', options: genderOptions },
-    { key: 'age', label: '年龄', options: [
-      { value: 'under-20', label: '20 岁以下' },
-      { value: '20-29', label: '20–29 岁' },
-      { value: '30-39', label: '30–39 岁' },
-      { value: '40-59', label: '40–59 岁' },
-      { value: '60-plus', label: '60 岁以上' },
+    { key: 'country', label: isVi ? 'Quốc gia' : '国家', options: uniqueOptions(digitalHumans.value.map(item => item.country), characterFilterValues.value.country) },
+    { key: 'gender', label: isVi ? 'Giới tính' : '性别', options: genderOptions.value },
+    { key: 'age', label: isVi ? 'Độ tuổi' : '年龄', options: [
+      { value: 'under-20', label: isVi ? 'Dưới 20 tuổi' : '20 岁以下' },
+      { value: '20-29', label: isVi ? '20–29 tuổi' : '20–29 岁' },
+      { value: '30-39', label: isVi ? '30–39 tuổi' : '30–39 岁' },
+      { value: '40-59', label: isVi ? '40–59 tuổi' : '40–59 岁' },
+      { value: '60-plus', label: isVi ? 'Trên 60 tuổi' : '60 岁以上' },
     ] },
-    { key: 'occupation', label: '职业', options: uniqueOptions(digitalHumans.value.map(item => item.occupation), characterFilterValues.value.occupation), width: 190 },
+    { key: 'occupation', label: isVi ? 'Nghề nghiệp' : '职业', options: uniqueOptions(digitalHumans.value.map(item => item.occupation), characterFilterValues.value.occupation), width: 190 },
   ]
 })
 
@@ -169,15 +184,27 @@ const activePagination = computed(() => {
 const hasMore = computed(() => activePagination.value.page < activePagination.value.pages)
 
 const resultCountLabel = computed(() => {
+  const isVi = locale.value === 'vi-VN'
   const hasPublicFilters = scope.value === 'public' && Object.values(publicCategory.value === 'character' ? characterFilterValues.value : audioFilterValues.value).some(Boolean)
   const { total } = activePagination.value
-  if (search.value.trim() || hasPublicFilters) return total > visibleCount.value ? `已加载 ${visibleCount.value} / ${total} 项匹配` : `${visibleCount.value} 项匹配`
-  return total > visibleCount.value ? `已加载 ${visibleCount.value} / ${total} 项` : `${visibleCount.value} 项资产`
+  if (search.value.trim() || hasPublicFilters) {
+    if (isVi) {
+      return total > visibleCount.value ? `Đã tải ${visibleCount.value} / ${total} kết quả khớp` : `${visibleCount.value} kết quả khớp`
+    }
+    return total > visibleCount.value ? `已加载 ${visibleCount.value} / ${total} 项匹配` : `${visibleCount.value} 项匹配`
+  }
+  return isVi ? `Tổng ${total} mục` : `共 ${total} 项`
 })
 
 const searchPlaceholder = computed(() => {
-  if (scope.value === 'project') return `搜索${projectCategories.find(item => item.value === projectCategory.value)?.label || '项目资产'}`
-  return publicCategory.value === 'character' ? '搜索职业、国家、性别或年龄' : '搜索音色名称或性别'
+  const isVi = locale.value === 'vi-VN'
+  if (scope.value === 'project') {
+    const categoryLabel = projectCategories.value.find(item => item.value === projectCategory.value)?.label || (isVi ? 'tài sản dự án' : '项目资产')
+    return isVi ? `Tìm kiếm ${categoryLabel}` : `搜索${categoryLabel}`
+  }
+  return publicCategory.value === 'character'
+    ? (isVi ? 'Tìm kiếm nghề nghiệp, quốc gia, giới tính hoặc độ tuổi' : '搜索职业、国家、性别或年龄')
+    : (isVi ? 'Tìm kiếm tên giọng đọc hoặc giới tính' : '搜索音色名称或性别')
 })
 
 async function loadPublicAssets() {
@@ -411,10 +438,10 @@ onBeforeUnmount(() => {
     <header class="assets-heading">
       <div>
         <span>ASSET LIBRARY</span>
-        <h1>资产</h1>
-        <p>统一管理可跨项目复用的公共素材，以及每个短剧项目独立的角色、场景和道具。</p>
+        <h1>{{ locale === 'vi-VN' ? 'Tài nguyên' : '资产' }}</h1>
+        <p>{{ locale === 'vi-VN' ? 'Quản lý tập trung các tài nguyên công khai có thể tái sử dụng qua nhiều dự án, cũng như nhân vật, bối cảnh và đạo cụ riêng của từng dự án phim ngắn.' : '统一管理可跨项目复用的公共素材，以及每个短剧项目独立的角色、场景和道具。' }}</p>
       </div>
-      <AppButton class="refresh-assets" variant="secondary" size="sm" type="button" :loading="refreshing" @click="refresh"><RefreshCw v-if="!refreshing" :size="16" />刷新</AppButton>
+      <AppButton class="refresh-assets" variant="secondary" size="sm" type="button" :loading="refreshing" @click="refresh"><RefreshCw v-if="!refreshing" :size="16" />{{ locale === 'vi-VN' ? 'Làm mới' : '刷新' }}</AppButton>
     </header>
 
     <AppTabs class="asset-scope-tabs" :model-value="scope" :items="scopeTabs" label="资产范围" @update:model-value="changeScopeFromTab" />
@@ -424,19 +451,19 @@ onBeforeUnmount(() => {
         <div class="workspace-category-row">
           <AppTabs v-if="scope === 'public'" class="asset-category-tabs" :model-value="publicCategory" :items="publicCategories" label="公共资产分类" @update:model-value="changePublicCategoryFromTab" />
           <AppTabs v-else class="asset-category-tabs" :model-value="projectCategory" :items="projectCategories" label="项目资产分类" @update:model-value="changeProjectCategoryFromTab" />
-          <AppButton v-if="scope === 'public' && publicCategory === 'audio'" type="button" variant="primary" size="sm" @click="audioUploadOpen = true"><Upload :size="14" />上传音频</AppButton>
+          <AppButton v-if="scope === 'public' && publicCategory === 'audio'" type="button" variant="primary" size="sm" @click="audioUploadOpen = true"><Upload :size="14" />{{ locale === 'vi-VN' ? 'Tải lên âm thanh' : '上传音频' }}</AppButton>
         </div>
 
         <SearchFilterBar v-model="search" v-model:filter-values="activeFilterValues" :filters="activeFilterDefinitions" :placeholder="searchPlaceholder" :search-aria-label="searchPlaceholder" :result-label="resultCountLabel" />
       </header>
 
-      <div v-if="loading" class="asset-state"><RefreshCw class="is-spinning" :size="23" /><span>正在加载资产库…</span></div>
+      <div v-if="loading" class="asset-state"><RefreshCw class="is-spinning" :size="23" /><span>{{ locale === 'vi-VN' ? 'Đang tải kho tài nguyên…' : '正在加载资产库…' }}</span></div>
 
       <template v-else-if="scope === 'public'">
         <div v-if="publicCategory === 'character' && filteredCharacters.length" class="public-character-grid">
           <article v-for="item in filteredCharacters" :key="item.id" class="public-character-card">
-            <div class="character-image"><img :src="item.image_url" :alt="`${item.occupation}角色`" /><span v-if="item.is_active"><Check :size="12" />可用</span></div>
-            <div class="character-copy"><div><h2>{{ item.occupation || '公共角色' }}</h2><AppButton type="button" variant="ghost" size="xs" icon-only aria-label="复制资产 ID" title="复制资产 ID" @click="copyAssetId(item.asset_id)"><Copy :size="14" /></AppButton></div><p>{{ item.country }} · {{ item.gender }} · {{ item.age }} 岁</p><small>{{ item.asset_id }}</small></div>
+            <div class="character-image"><img :src="item.image_url" :alt="`${item.occupation || (locale === 'vi-VN' ? 'Nhân vật' : '角色')}`" /><span v-if="item.is_active"><Check :size="12" />{{ locale === 'vi-VN' ? 'Khả dụng' : '可用' }}</span></div>
+            <div class="character-copy"><div><h2>{{ item.occupation || (locale === 'vi-VN' ? 'Nhân vật công khai' : '公共角色') }}</h2><AppButton type="button" variant="ghost" size="xs" icon-only :aria-label="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" :title="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" @click="copyAssetId(item.asset_id)"><Copy :size="14" /></AppButton></div><p>{{ item.country }} · {{ item.gender === '男' || item.gender === '男性' ? (locale === 'vi-VN' ? 'Nam' : item.gender) : item.gender === '女' || item.gender === '女性' ? (locale === 'vi-VN' ? 'Nữ' : item.gender) : item.gender }} · {{ item.age }} {{ locale === 'vi-VN' ? 'tuổi' : '岁' }}</p><small>{{ item.asset_id }}</small></div>
           </article>
         </div>
 
@@ -444,17 +471,17 @@ onBeforeUnmount(() => {
           <article v-for="item in filteredAudio" :key="item.id" class="audio-reference-card">
             <img v-if="item.avatar_url" :src="item.avatar_url" :alt="item.nickname" />
             <span v-else class="audio-reference-avatar"><Mic2 :size="20" /></span>
-            <div class="audio-copy"><span><Mic2 :size="13" />{{ item.gender }}声音</span><h2>{{ item.nickname }}</h2><small>{{ item.asset_id }}</small></div>
+            <div class="audio-copy"><span><Mic2 :size="13" />{{ item.gender === '男' || item.gender === '男性' ? (locale === 'vi-VN' ? 'Giọng nam' : '男声音') : (locale === 'vi-VN' ? 'Giọng nữ' : '女声音') }}</span><h2>{{ item.nickname }}</h2><small>{{ item.asset_id }}</small></div>
             <audio :src="item.audio_url" controls preload="none" />
-            <AppButton type="button" variant="ghost" size="xs" icon-only aria-label="复制资产 ID" title="复制资产 ID" @click="copyAssetId(item.asset_id)"><Copy :size="14" /></AppButton>
+            <AppButton type="button" variant="ghost" size="xs" icon-only :aria-label="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" :title="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" @click="copyAssetId(item.asset_id)"><Copy :size="14" /></AppButton>
           </article>
         </div>
 
-        <div v-else class="asset-state is-empty"><span><component :is="publicCategory === 'character' ? UsersRound : Volume2" :size="26" /></span><h2>没有找到匹配的{{ publicCategory === 'character' ? '角色' : '音频' }}</h2><p>换一个关键词试试。</p></div>
+        <div v-else class="asset-state is-empty"><span><component :is="publicCategory === 'character' ? UsersRound : Volume2" :size="26" /></span><h2>{{ locale === 'vi-VN' ? 'Không tìm thấy ' + (publicCategory === 'character' ? 'nhân vật' : 'âm thanh') + ' phù hợp' : '没有找到匹配的' + (publicCategory === 'character' ? '角色' : '音频') }}</h2><p>{{ locale === 'vi-VN' ? 'Hãy thử từ khóa khác.' : '换一个关键词试试。' }}</p></div>
       </template>
 
       <template v-else>
-        <div v-if="!projects.length" class="asset-state is-empty"><span><FolderKanban :size="26" /></span><h2>还没有项目资产</h2><p>先创建一个短剧项目，角色、场景和道具会按项目归档。</p><RouterLink to="/projects">前往项目<ChevronRight :size="15" /></RouterLink></div>
+        <div v-if="!projects.length" class="asset-state is-empty"><span><FolderKanban :size="26" /></span><h2>{{ locale === 'vi-VN' ? 'Chưa có tài nguyên dự án' : '还没有项目资产' }}</h2><p>{{ locale === 'vi-VN' ? 'Hãy tạo một dự án phim ngắn trước, nhân vật, bối cảnh và đạo cụ sẽ được lưu theo từng dự án.' : '先创建一个短剧项目，角色、场景和道具会按项目归档。' }}</p><RouterLink to="/projects">{{ locale === 'vi-VN' ? 'Đến dự án' : '前往项目' }}<ChevronRight :size="15" /></RouterLink></div>
 
         <div v-else-if="filteredProjectAssets.length" class="project-asset-grid">
           <article v-for="item in filteredProjectAssets" :key="item.id" class="project-asset-card">
@@ -462,17 +489,17 @@ onBeforeUnmount(() => {
               <img v-if="item.main_image" :src="item.main_image_thumbnail || item.main_image" :alt="item.canonical_name" loading="lazy" decoding="async" />
               <component :is="projectCategory === 'character' ? UserRound : projectCategory === 'scene' ? ImageIcon : Box" v-else :size="30" />
             </div>
-            <div><span>{{ selectedProject?.name }}</span><h2>{{ item.canonical_name }}</h2><p>{{ item.description || '暂无资产描述' }}</p><small v-if="item.source_chapters?.length">出现于第 {{ item.source_chapters.join('、') }} 集</small></div>
+            <div><span>{{ selectedProject?.name }}</span><h2>{{ item.canonical_name }}</h2><p>{{ item.description || (locale === 'vi-VN' ? 'Chưa có mô tả tài nguyên' : '暂无资产描述') }}</p><small v-if="item.source_chapters?.length">{{ locale === 'vi-VN' ? `Xuất hiện ở tập ${item.source_chapters.join('、')}` : `出现于第 ${item.source_chapters.join('、')} 集` }}</small></div>
           </article>
         </div>
 
-        <div v-else class="asset-state is-empty"><span><component :is="projectCategory === 'character' ? UserRound : projectCategory === 'scene' ? Map : Box" :size="26" /></span><h2>暂无{{ projectCategories.find(item => item.value === projectCategory)?.label }}资产</h2><p>{{ selectedProject?.name }}还没有生成这一类资产。</p></div>
+        <div v-else class="asset-state is-empty"><span><component :is="projectCategory === 'character' ? UserRound : projectCategory === 'scene' ? Map : Box" :size="26" /></span><h2>{{ locale === 'vi-VN' ? 'Chưa có tài nguyên ' + (projectCategories.find(item => item.value === projectCategory)?.label) : '暂无' + (projectCategories.find(item => item.value === projectCategory)?.label) + '资产' }}</h2><p>{{ selectedProject?.name }} {{ locale === 'vi-VN' ? 'chưa tạo loại tài nguyên này.' : '还没有生成这一类资产。' }}</p></div>
       </template>
 
       <div ref="loadMoreTarget" class="load-more-sentinel" aria-live="polite">
-        <span v-if="loadingMore"><RefreshCw class="is-spinning" :size="16" />正在加载更多资产…</span>
-        <span v-else-if="hasMore">继续下滑加载更多</span>
-        <span v-else-if="visibleCount">已加载全部资产</span>
+        <span v-if="loadingMore"><RefreshCw class="is-spinning" :size="16" />{{ locale === 'vi-VN' ? 'Đang tải thêm tài nguyên…' : '正在加载更多资产…' }}</span>
+        <span v-else-if="hasMore">{{ locale === 'vi-VN' ? 'Cuộn xuống để tải thêm' : '继续下滑加载更多' }}</span>
+        <span v-else-if="visibleCount">{{ locale === 'vi-VN' ? 'Đã tải toàn bộ tài nguyên' : '已加载全部资产' }}</span>
       </div>
     </section>
     <AudioReferencePicker :open="audioUploadOpen" start-in-upload @close="audioUploadOpen = false" @choose="addUploadedAudio" />

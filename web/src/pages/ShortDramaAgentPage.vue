@@ -528,8 +528,8 @@ onBeforeUnmount(() => {
           <h1 v-else>{{ project.name }}</h1>
           <p><FileText :size="14" />{{ analysisResult?.chapter_count || chaptersTotal || 0 }} 章 <i /> <Film :size="14" />{{ project.aspectRatio }} <i /> <MonitorPlay :size="14" />{{ project.resolution }}</p>
           <label v-if="editing && projectDraft" class="tag-editor">
-            <span>项目标签</span>
-            <input v-model="projectDraft.tagsText" placeholder="使用逗号分隔，例如：都市，热血，成长" />
+            <span>{{ $t('agentWorkspace.projectTags') }}</span>
+            <input v-model="projectDraft.tagsText" :placeholder="$t('agentWorkspace.tagsPlaceholder')" />
           </label>
           <div v-else-if="displayedTags.length" class="genre-tags">
             <AppBadge v-for="(genre, index) in displayedTags" :key="genre" :tone="index % 2 ? 'success' : 'accent'" size="sm">{{ genre }}</AppBadge>
@@ -537,12 +537,12 @@ onBeforeUnmount(() => {
         </div>
         <div class="analysis-hero-actions">
           <template v-if="editing">
-            <AppButton variant="ghost" size="sm" type="button" :disabled="savingEdits" @click="cancelEditing"><X :size="15" />取消</AppButton>
-            <AppButton variant="primary" size="sm" type="button" :loading="savingEdits" @click="saveEdits"><Save :size="15" />保存修改</AppButton>
+            <AppButton variant="ghost" size="sm" type="button" :disabled="savingEdits" @click="cancelEditing"><X :size="15" />{{ $t('agentWorkspace.cancel') }}</AppButton>
+            <AppButton variant="primary" size="sm" type="button" :loading="savingEdits" @click="saveEdits"><Save :size="15" />{{ $t('agentWorkspace.saveEdits') }}</AppButton>
           </template>
           <template v-else>
-            <AppButton v-if="canEdit" class="secondary-action" variant="secondary" size="sm" type="button" :disabled="analysisRunning || startingAnalysis" @click="regenerateAnalysis"><RefreshCw :size="15" />重新分析</AppButton>
-            <AppButton v-if="canEdit && analysisResult" variant="primary" size="sm" type="button" @click="beginEditing"><Pencil :size="15" />编辑内容</AppButton>
+            <AppButton v-if="canEdit" class="secondary-action" variant="secondary" size="sm" type="button" :disabled="analysisRunning || startingAnalysis" @click="regenerateAnalysis"><RefreshCw :size="15" />{{ $t('agentWorkspace.reanalyze') }}</AppButton>
+            <AppButton v-if="canEdit && analysisResult" variant="primary" size="sm" type="button" @click="beginEditing"><Pencil :size="15" />{{ $t('agentWorkspace.editContent') }}</AppButton>
           </template>
         </div>
       </div>
@@ -555,20 +555,20 @@ onBeforeUnmount(() => {
           <p v-else-if="analysisTask?.status === TaskStatusEnum.FAILED">{{ analysisTask.error_message || '模型调用失败，请检查模型配置后重试。' }}</p>
           <p v-else>开始分析后，结果会自动保存在当前项目中。</p>
         </div>
-        <AppButton v-if="canEdit && !analysisRunning && !startingAnalysis" variant="primary" size="sm" type="button" @click="startAnalysis">开始分析</AppButton>
+        <AppButton v-if="canEdit && !analysisRunning && !startingAnalysis" variant="primary" size="sm" type="button" @click="startAnalysis">{{ $t('agentWorkspace.startAnalysis') }}</AppButton>
       </section>
 
       <template v-if="hasScriptPreview">
       <section class="analysis-section">
-        <header><div><span class="section-kicker">PRODUCTION PROFILE</span><h2>项目设定</h2></div></header>
+        <header><div><span class="section-kicker">PRODUCTION PROFILE</span><h2>{{ $t('agentWorkspace.productionProfile') }}</h2></div></header>
         <div class="profile-grid">
           <article class="profile-card">
             <span><Bot :size="18" /></span>
             <div>
-              <small>剧本类型</small>
+              <small>{{ $t('agentWorkspace.scriptType') }}</small>
               <template v-if="editing && projectDraft">
-                <input v-model="projectDraft.projectType" aria-label="剧本类型" maxlength="120" />
-                <textarea v-model="projectDraft.projectSetting" aria-label="项目设定说明" rows="3" />
+                <input v-model="projectDraft.projectType" :aria-label="$t('agentWorkspace.scriptType')" maxlength="120" />
+                <textarea v-model="projectDraft.projectSetting" :aria-label="$t('agentWorkspace.productionProfile')" rows="3" />
               </template>
               <template v-else><strong>{{ projectView.projectType }}</strong><p>{{ projectView.projectSetting }}</p></template>
             </div>
@@ -576,25 +576,25 @@ onBeforeUnmount(() => {
           <article class="profile-card">
             <span><Clapperboard :size="18" /></span>
             <div>
-              <small>分镜策略</small>
+              <small>{{ $t('agentWorkspace.storyboardStrategy') }}</small>
               <template v-if="editing && projectDraft">
                 <AppSelect
                   class="storyboard-strategy-select"
                   :model-value="projectDraft.storyboardStrategy"
-                  ariaLabel="分镜策略"
-                  menu-label="分镜策略"
+                  :ariaLabel="$t('agentWorkspace.storyboardStrategy')"
+                  :menu-label="$t('agentWorkspace.storyboardStrategy')"
                   :menu-width="230"
                   :options="storyboardStrategyOptions"
                   @update:model-value="selectStoryboardStrategy"
                 />
                 <p>{{ projectDraft.storyboardSetting }}</p>
                 <button v-if="narrationStrategyActive" type="button" class="narrator-voice-button" @click="narratorPickerOpen = true">
-                  <Volume2 :size="14" /><span><small>旁白声音</small><strong>{{ narratorVoice?.nickname || '选择旁白音色' }}</strong></span>
+                  <Volume2 :size="14" /><span><small>{{ $t('agentWorkspace.narratorVoice') }}</small><strong>{{ narratorVoice?.nickname || $t('agentWorkspace.selectNarratorVoice') }}</strong></span>
                 </button>
               </template>
               <template v-else>
                 <strong>{{ projectStrategyView?.name || projectView.storyboardStrategy }}</strong><p>{{ projectStrategyView?.description || projectView.storyboardSetting }}</p>
-                <div v-if="narrationStrategyActive" class="narrator-voice-summary"><Volume2 :size="13" />旁白音色：{{ narratorVoice?.nickname || '未选择' }}</div>
+                <div v-if="narrationStrategyActive" class="narrator-voice-summary"><Volume2 :size="13" />{{ $t('agentWorkspace.narratorVoice') }}：{{ narratorVoice?.nickname || $t('agentWorkspace.notSelectedVoice') }}</div>
               </template>
             </div>
           </article>
@@ -602,34 +602,34 @@ onBeforeUnmount(() => {
       </section>
 
       <section class="analysis-section">
-        <header><div><span class="section-kicker">STORY OVERVIEW</span><h2>故事大纲</h2></div></header>
+        <header><div><span class="section-kicker">STORY OVERVIEW</span><h2>{{ $t('agentWorkspace.storyOverview') }}</h2></div></header>
         <article class="outline-card">
           <span><BookOpenText :size="20" /></span>
-          <textarea v-if="editing && projectDraft" v-model="projectDraft.storyOutline" aria-label="故事大纲" rows="8" />
+          <textarea v-if="editing && projectDraft" v-model="projectDraft.storyOutline" :aria-label="$t('agentWorkspace.storyOverview')" rows="8" />
           <p v-else>{{ projectView.storyOutline }}</p>
         </article>
       </section>
 
       <section class="analysis-section">
-        <header><div><span class="section-kicker">CHARACTER BIBLE</span><h2>人物小传</h2></div><span>{{ characters.length }} 位主要人物</span></header>
+        <header><div><span class="section-kicker">CHARACTER BIBLE</span><h2>{{ $t('agentWorkspace.characterBible') }}</h2></div><span>{{ $t('agentWorkspace.keyCharacters', { count: characters.length }) }}</span></header>
         <div class="character-grid">
           <article v-for="(character, index) in visibleCharacters" :key="character.name" class="character-card">
             <div class="character-title"><span :style="{ '--character-accent': characterColors[index % characterColors.length] }">{{ character.name.slice(0, 1) }}</span><div><h3>{{ character.name }}</h3><small>{{ character.role }}</small></div></div>
             <p>{{ character.description }}</p>
-            <div class="episode-appearances"><small>出场章节</small><AppBadge v-for="chapterNumber in character.chapter_numbers" :key="chapterNumber" size="sm">第 {{ chapterNumber }} 章</AppBadge></div>
+            <div class="episode-appearances"><small>{{ $t('agentWorkspace.appearances') }}</small><AppBadge v-for="chapterNumber in character.chapter_numbers" :key="chapterNumber" size="sm">{{ $t('agentWorkspace.episodeNumber', { number: chapterNumber }) }}</AppBadge></div>
           </article>
         </div>
         <AppButton v-if="characters.length > 4" class="show-more" variant="ghost" size="sm" block type="button" @click="showingAllCharacters = !showingAllCharacters">
-          {{ showingAllCharacters ? '收起人物' : '查看全部人物' }}<ChevronDown :class="{ 'is-up': showingAllCharacters }" :size="15" />
+          {{ showingAllCharacters ? $t('agentWorkspace.showLessCharacters') : $t('agentWorkspace.showMoreCharacters') }}<ChevronDown :class="{ 'is-up': showingAllCharacters }" :size="15" />
         </AppButton>
       </section>
 
       <section class="analysis-section episode-section">
         <header>
-          <div><span class="section-kicker">EPISODE CHAPTERS</span><h2>分集剧情</h2><p>复用项目的分章节结构，每一集对应一个章节。</p></div>
-          <span>{{ chaptersTotal }} 章</span>
+          <div><span class="section-kicker">EPISODE CHAPTERS</span><h2>{{ $t('agentWorkspace.episodeChapters') }}</h2><p>{{ $t('agentWorkspace.episodeChaptersDesc') }}</p></div>
+          <span>{{ $t('agentWorkspace.chaptersCount', { count: chaptersTotal }) }}</span>
         </header>
-        <div ref="episodeTabs" class="episode-tabs" role="tablist" aria-label="分集剧情" tabindex="0">
+        <div ref="episodeTabs" class="episode-tabs" role="tablist" :aria-label="$t('agentWorkspace.episodeChapters')" tabindex="0">
           <AppButton v-for="chapter in chapters" :key="chapter.id" variant="soft" size="sm" icon-only type="button" role="tab" :active="activeEpisode === chapter.number" :aria-selected="activeEpisode === chapter.number" @click="selectEpisode(chapter.number, $event)">{{ chapter.number }}</AppButton>
           <span v-if="chaptersHasMore" class="episode-load-more">{{ chaptersLoading ? '加载中…' : '继续滚动加载' }}</span>
         </div>
@@ -640,21 +640,21 @@ onBeforeUnmount(() => {
             <div>
               <small>EPISODE {{ selectedEpisode.number }}</small>
               <label v-if="editing && selectedEpisodeDraft" class="chapter-title-editor">
-                <span>第 {{ selectedEpisode.number }} 集</span>
-                <input v-model="selectedEpisodeDraft.name" aria-label="章节标题" maxlength="255" />
+                <span>{{ $t('agentWorkspace.episodeNumber', { number: selectedEpisode.number }) }}</span>
+                <input v-model="selectedEpisodeDraft.name" :aria-label="$t('agentWorkspace.chapterTitle')" maxlength="255" />
               </label>
               <h3 v-else>{{ episodeDisplayLabel(selectedEpisode) }}</h3>
             </div>
           </header>
           <p v-if="selectedEpisodeLoading" class="episode-content-state">正在加载章节正文…</p>
-          <textarea v-else-if="editing && selectedEpisodeDraft" v-model="selectedEpisodeDraft.content" class="chapter-content-editor" aria-label="章节内容" />
+          <textarea v-else-if="editing && selectedEpisodeDraft" v-model="selectedEpisodeDraft.content" class="chapter-content-editor" :aria-label="$t('agentWorkspace.chapterContent')" />
           <p v-else-if="selectedEpisode.content">{{ selectedEpisode.content }}</p>
-          <p v-else class="episode-content-state">该章节暂无正文内容</p>
-          <footer><span><UsersRound :size="14" />{{ selectedEpisodeCharacters }}</span><span>第 {{ selectedEpisode.number }} 章</span></footer>
+          <p v-else class="episode-content-state">{{ $t('agentWorkspace.emptyChapterContent') }}</p>
+          <footer><span><UsersRound :size="14" />{{ selectedEpisodeCharacters }}</span><span>{{ $t('agentWorkspace.episodeNumber', { number: selectedEpisode.number }) }}</span></footer>
         </article>
       </section>
 
-      <AppButton class="continue-button" variant="primary" size="lg" block type="button" @click="continueToSettings"><span><Sparkles :size="18" />确认分析，进入设定</span><ArrowRight :size="18" /></AppButton>
+      <AppButton class="continue-button" variant="primary" size="lg" block type="button" @click="continueToSettings"><span><Sparkles :size="18" />{{ $t('agentWorkspace.confirmAndContinue') }}</span><ArrowRight :size="18" /></AppButton>
       </template>
       </section>
     <AudioReferencePicker :open="narratorPickerOpen" :selected-id="projectDraft?.narratorAudioReferenceId || novel?.narrator_audio_reference_id" :novel-id="novel?.id" @close="narratorPickerOpen = false" @choose="selectNarratorVoice" />

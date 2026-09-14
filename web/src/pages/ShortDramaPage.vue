@@ -24,7 +24,7 @@ import { api } from '@/api'
 import { notice } from '@/shared/notice'
 import type { StoryboardStrategy } from '@/types'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 type CreationMode = 'agent' | 'manual'
 
@@ -70,13 +70,23 @@ const storyboardStrategy = ref('cinematic')
 const customPrompt = ref('')
 const creating = ref(false)
 
-const selectedStyle = computed(() => visualStyles.value.find(item => item.value === styleId.value) ?? visualStyles.value[0])
+const strategyNameMap: Record<string, string> = {
+  cinematic: 'Kể chuyện điện ảnh',
+  narration: 'Kể chuyện có thuyết minh',
+}
+
+const displayVisualStyles = computed(() => visualStyles.value.map(item => ({
+  ...item,
+  label: t(`visualStyles.${item.value}`) !== `visualStyles.${item.value}` ? t(`visualStyles.${item.value}`) : item.label,
+})))
+
+const selectedStyle = computed(() => displayVisualStyles.value.find(item => item.value === styleId.value) ?? displayVisualStyles.value[0])
 const selectedStoryboardStrategy = computed(() => storyboardStrategies.value.find(
   item => item.key === storyboardStrategy.value,
 ))
 const storyboardStrategyOptions = computed(() => storyboardStrategies.value.map(item => ({
   value: item.key,
-  label: item.name,
+  label: (locale.value === 'vi-VN' && strategyNameMap[item.key]) ? strategyNameMap[item.key] : item.name,
 })))
 const isAgentMode = computed(() => mode.value === 'agent')
 const formattedFileSize = computed(() => {
@@ -345,7 +355,7 @@ async function createProject() {
             :menu-width="230"
             :max-menu-height="404"
             align="end"
-            :options="visualStyles"
+            :options="displayVisualStyles"
           >
             <template #leading="{ option }">
               <img v-if="option.image" class="select-thumbnail" :src="option.image" alt="" />
