@@ -4,8 +4,11 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIR"
 
+mkdir -p data media
+chmod -R 775 data media 2>/dev/null || true
+
 echo "🚀 Đang khởi động HenryVids Studio (Docker)..."
-docker compose up -d
+docker compose up -d "$@"
 
 echo ""
 echo "======================================================="

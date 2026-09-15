@@ -8,8 +8,8 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock ./
-# 只安装运行时依赖，不安装本项目自身（代码在仓库根目录，运行时直接 import）
-RUN uv sync --frozen --no-dev --no-install-project
+# Chỉ cài đặt runtime dependencies kèm aiosqlite để đảm bảo chạy SQLite mượt mà không thiếu thư viện
+RUN uv sync --frozen --no-dev --no-install-project && uv pip install aiosqlite
 
 FROM python:3.12-slim AS runtime
 
