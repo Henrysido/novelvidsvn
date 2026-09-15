@@ -23,6 +23,7 @@ import AudioReferencePicker from '@/components/AudioReferencePicker.vue'
 import type { SearchFilterDefinition } from '@/components/SearchFilterBar.vue'
 import { api } from '@/api'
 import { notice } from '@/shared/notice'
+import { translateVoiceNickname, translateCountry, translateOccupation, translateGender } from '@/shared/voiceI18n'
 import { AssetTypeEnum } from '@/types'
 import type { Asset, AudioReference, DigitalHuman, Novel } from '@/types'
 
@@ -127,8 +128,11 @@ const genderOptions = computed(() => {
   ]
 })
 
-function uniqueOptions(values: Array<string | undefined>, selected = '') {
-  return [...new Set([...values, selected].filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, 'zh-CN')).map(value => ({ value, label: value }))
+function uniqueOptions(values: Array<string | undefined>, selected = '', translator?: (val: string, isVi: boolean) => string) {
+  const isVi = locale.value === 'vi-VN'
+  return [...new Set([...values, selected].filter((value): value is string => Boolean(value)))]
+    .sort((a, b) => a.localeCompare(b, 'zh-CN'))
+    .map(value => ({ value, label: translator ? translator(value, isVi) : value }))
 }
 
 const activeFilterDefinitions = computed<SearchFilterDefinition[]>(() => {
@@ -136,7 +140,7 @@ const activeFilterDefinitions = computed<SearchFilterDefinition[]>(() => {
   if (scope.value === 'project') return projectOptions.value.length ? [{ key: 'project', label: isVi ? 'Dự án' : '项目', options: projectOptions.value, width: 220, required: true }] : []
   if (publicCategory.value === 'audio') return [{ key: 'gender', label: isVi ? 'Giới tính' : '性别', options: genderOptions.value }]
   return [
-    { key: 'country', label: isVi ? 'Quốc gia' : '国家', options: uniqueOptions(digitalHumans.value.map(item => item.country), characterFilterValues.value.country) },
+    { key: 'country', label: isVi ? 'Quốc gia' : '国家', options: uniqueOptions(digitalHumans.value.map(item => item.country), characterFilterValues.value.country, translateCountry) },
     { key: 'gender', label: isVi ? 'Giới tính' : '性别', options: genderOptions.value },
     { key: 'age', label: isVi ? 'Độ tuổi' : '年龄', options: [
       { value: 'under-20', label: isVi ? 'Dưới 20 tuổi' : '20 岁以下' },
@@ -145,7 +149,7 @@ const activeFilterDefinitions = computed<SearchFilterDefinition[]>(() => {
       { value: '40-59', label: isVi ? '40–59 tuổi' : '40–59 岁' },
       { value: '60-plus', label: isVi ? 'Trên 60 tuổi' : '60 岁以上' },
     ] },
-    { key: 'occupation', label: isVi ? 'Nghề nghiệp' : '职业', options: uniqueOptions(digitalHumans.value.map(item => item.occupation), characterFilterValues.value.occupation), width: 190 },
+    { key: 'occupation', label: isVi ? 'Nghề nghiệp' : '职业', options: uniqueOptions(digitalHumans.value.map(item => item.occupation), characterFilterValues.value.occupation, translateOccupation), width: 190 },
   ]
 })
 
@@ -356,7 +360,7 @@ async function refresh() {
   try {
     if (scope.value === 'public') await reloadActivePublicAssets()
     else await loadProjectAssets()
-    notice.success('资产库已刷新')
+    notice.success(locale.value === 'vi-VN' ? 'Kho tài nguyên đã được làm mới' : '资产库已刷新')
   } catch (error) {
     notice.error((error as Error).message)
   } finally {
@@ -394,9 +398,9 @@ function changeProjectCategoryFromTab(value: string) {
 async function copyAssetId(assetId: string) {
   try {
     await navigator.clipboard.writeText(assetId)
-    notice.success('资产 ID 已复制')
+    notice.success(locale.value === 'vi-VN' ? 'Đã sao chép ID tài nguyên' : '资产 ID 已复制')
   } catch {
-    notice.error('复制失败，请稍后重试')
+    notice.error(locale.value === 'vi-VN' ? 'Sao chép thất bại, vui lòng thử lại sau' : '复制失败，请稍后重试')
   }
 }
 
@@ -462,16 +466,16 @@ onBeforeUnmount(() => {
       <template v-else-if="scope === 'public'">
         <div v-if="publicCategory === 'character' && filteredCharacters.length" class="public-character-grid">
           <article v-for="item in filteredCharacters" :key="item.id" class="public-character-card">
-            <div class="character-image"><img :src="item.image_url" :alt="`${item.occupation || (locale === 'vi-VN' ? 'Nhân vật' : '角色')}`" /><span v-if="item.is_active"><Check :size="12" />{{ locale === 'vi-VN' ? 'Khả dụng' : '可用' }}</span></div>
-            <div class="character-copy"><div><h2>{{ item.occupation || (locale === 'vi-VN' ? 'Nhân vật công khai' : '公共角色') }}</h2><AppButton type="button" variant="ghost" size="xs" icon-only :aria-label="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" :title="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" @click="copyAssetId(item.asset_id)"><Copy :size="14" /></AppButton></div><p>{{ item.country }} · {{ item.gender === '男' || item.gender === '男性' ? (locale === 'vi-VN' ? 'Nam' : item.gender) : item.gender === '女' || item.gender === '女性' ? (locale === 'vi-VN' ? 'Nữ' : item.gender) : item.gender }} · {{ item.age }} {{ locale === 'vi-VN' ? 'tuổi' : '岁' }}</p><small>{{ item.asset_id }}</small></div>
+            <div class="character-image"><img :src="item.image_url" :alt="`${translateOccupation(item.occupation, locale === 'vi-VN') || (locale === 'vi-VN' ? 'Nhân vật' : '角色')}`" /><span v-if="item.is_active"><Check :size="12" />{{ locale === 'vi-VN' ? 'Khả dụng' : '可用' }}</span></div>
+            <div class="character-copy"><div><h2>{{ translateOccupation(item.occupation, locale === 'vi-VN') || (locale === 'vi-VN' ? 'Nhân vật công khai' : '公共角色') }}</h2><AppButton type="button" variant="ghost" size="xs" icon-only :aria-label="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" :title="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" @click="copyAssetId(item.asset_id)"><Copy :size="14" /></AppButton></div><p>{{ translateCountry(item.country, locale === 'vi-VN') }} · {{ translateGender(item.gender, locale === 'vi-VN') }} · {{ item.age }} {{ locale === 'vi-VN' ? 'tuổi' : '岁' }}</p><small>{{ item.asset_id }}</small></div>
           </article>
         </div>
 
         <div v-else-if="publicCategory === 'audio' && filteredAudio.length" class="audio-library-list">
           <article v-for="item in filteredAudio" :key="item.id" class="audio-reference-card">
-            <img v-if="item.avatar_url" :src="item.avatar_url" :alt="item.nickname" />
+            <img v-if="item.avatar_url" :src="item.avatar_url" :alt="translateVoiceNickname(item.nickname, locale === 'vi-VN')" />
             <span v-else class="audio-reference-avatar"><Mic2 :size="20" /></span>
-            <div class="audio-copy"><span><Mic2 :size="13" />{{ item.gender === '男' || item.gender === '男性' ? (locale === 'vi-VN' ? 'Giọng nam' : '男声音') : (locale === 'vi-VN' ? 'Giọng nữ' : '女声音') }}</span><h2>{{ item.nickname }}</h2><small>{{ item.asset_id }}</small></div>
+            <div class="audio-copy"><span><Mic2 :size="13" />{{ item.gender === '男' || item.gender === '男性' ? (locale === 'vi-VN' ? 'Giọng nam' : '男声音') : (locale === 'vi-VN' ? 'Giọng nữ' : '女声音') }}</span><h2>{{ translateVoiceNickname(item.nickname, locale === 'vi-VN') }}</h2><small>{{ item.asset_id }}</small></div>
             <audio :src="item.audio_url" controls preload="none" />
             <AppButton type="button" variant="ghost" size="xs" icon-only :aria-label="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" :title="locale === 'vi-VN' ? 'Sao chép ID tài nguyên' : '复制资产 ID'" @click="copyAssetId(item.asset_id)"><Copy :size="14" /></AppButton>
           </article>

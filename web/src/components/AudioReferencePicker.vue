@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Clock3, LoaderCircle, Mic2, Scissors, Search, Upload, X } from 'lucide-vue-next'
 import { api } from '@/api'
 import AudioRangeSlider from '@/components/AudioRangeSlider.vue'
 import { trimLocalAudioFile } from '@/shared/audioTrim'
+import { translateVoiceNickname, translateGender } from '@/shared/voiceI18n'
 import type { AudioReference } from '@/types'
+
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 const props = defineProps<{
   open: boolean
@@ -75,7 +80,7 @@ async function load(reset = false) {
     items.value = reset ? response.data.items : [...items.value, ...response.data.items]
     pages.value = response.data.pagination.pages
   } catch (reason) {
-    if (currentRequestId === requestId) error.value = reason instanceof Error ? reason.message : '音频库加载失败'
+    if (currentRequestId === requestId) error.value = reason instanceof Error ? reason.message : (isVi.value ? 'Tải kho âm thanh thất bại' : '音频库加载失败')
   } finally {
     if (currentRequestId === requestId) loading.value = false
   }
@@ -91,7 +96,7 @@ function chooseFile(event: Event) {
   releaseUploadPreview()
   if (file && file.size > 200 * 1024 * 1024) {
     uploadFile.value = null
-    error.value = '原音频不能超过 200MB'
+    error.value = isVi.value ? 'File âm thanh gốc không được vượt quá 200MB' : '原音频不能超过 200MB'
     return
   }
   error.value = ''
@@ -140,7 +145,7 @@ async function uploadReference() {
     uploadOpen.value = false
     emit('choose', response.data)
   } catch (reason) {
-    error.value = reason instanceof Error ? reason.message : '参考音频上传失败'
+    error.value = reason instanceof Error ? reason.message : (isVi.value ? 'Tải lên âm thanh tham chiếu thất bại' : '参考音频上传失败')
   } finally {
     uploading.value = false
   }
@@ -165,7 +170,7 @@ function toggleUpload() {
 function openTrim(item: AudioReference) {
   const duration = Number(item.duration)
   if (!Number.isFinite(duration) || duration <= 0) {
-    error.value = '音频时长还在读取，请稍后重试'
+    error.value = isVi.value ? 'Đang đọc thời lượng âm thanh, vui lòng thử lại sau giây lát' : '音频时长还在读取，请稍后重试'
     return
   }
   trimTarget.value = item
@@ -194,7 +199,7 @@ async function createTrimmedReference() {
     trimTarget.value = null
     emit('choose', response.data)
   } catch (reason) {
-    error.value = reason instanceof Error ? reason.message : '音频裁剪失败'
+    error.value = reason instanceof Error ? reason.message : (isVi.value ? 'Cắt âm thanh thất bại' : '音频裁剪失败')
   } finally {
     trimming.value = false
   }
@@ -218,21 +223,21 @@ onBeforeUnmount(releaseUploadPreview)
 <template>
   <Teleport to="body">
     <div v-if="open" class="audio-picker-backdrop" @mousedown.self="emit('close')">
-      <section class="audio-picker" role="dialog" aria-modal="true" aria-label="选择音色" @keydown.esc.stop="emit('close')">
+      <section class="audio-picker" role="dialog" aria-modal="true" :aria-label="isVi ? 'Chọn giọng đọc tham chiếu' : '选择音色'" @keydown.esc.stop="emit('close')">
         <header>
-          <div><span><Mic2 :size="18" /></span><div><h2>选择音色</h2><p>系统音色和上传音频都会在视频生成时保持角色声音一致。</p></div></div>
-          <AppButton type="button" variant="ghost" size="sm" icon-only aria-label="关闭" @click="emit('close')"><X :size="18" /></AppButton>
+          <div><span><Mic2 :size="18" /></span><div><h2>{{ isVi ? 'Chọn giọng đọc tham chiếu' : '选择音色' }}</h2><p>{{ isVi ? 'Giọng hệ thống và âm thanh tải lên đều giúp giữ tính nhất quán giọng nói của nhân vật khi tạo video.' : '系统音色和上传音频都会在视频生成时保持角色声音一致。' }}</p></div></div>
+          <AppButton type="button" variant="ghost" size="sm" icon-only :aria-label="isVi ? 'Đóng' : '关闭'" @click="emit('close')"><X :size="18" /></AppButton>
         </header>
         <div class="audio-picker__tools">
-          <label><Search :size="15" /><input v-model="search" placeholder="搜索音色名称或性别" @keyup.enter="load(true)" /></label>
-          <AppButton type="button" variant="secondary" size="sm" @click="toggleUpload"><Upload :size="14" />上传音频</AppButton>
+          <label><Search :size="15" /><input v-model="search" :placeholder="isVi ? 'Tìm kiếm tên giọng đọc hoặc giới tính…' : '搜索音色名称或性别'" @keyup.enter="load(true)" /></label>
+          <AppButton type="button" variant="secondary" size="sm" @click="toggleUpload"><Upload :size="14" />{{ isVi ? 'Tải lên âm thanh' : '上传音频' }}</AppButton>
         </div>
         <form v-if="uploadOpen" class="audio-picker__upload" @submit.prevent="uploadReference">
-          <label><span>音色名称</span><input v-model="uploadName" maxlength="100" placeholder="例如：羽宁参考音色" /></label>
-          <label><span>性别</span><select v-model="uploadGender"><option>未设置</option><option>男</option><option>女</option><option>其他</option></select></label>
-          <label class="audio-picker__file"><input type="file" accept="audio/mpeg,audio/wav,.mp3,.wav" @change="chooseFile" /><span>{{ uploadFile?.name || '选择 MP3 / WAV，长音频可在上传前裁剪' }}</span></label>
+          <label><span>{{ isVi ? 'Tên giọng đọc' : '音色名称' }}</span><input v-model="uploadName" maxlength="100" :placeholder="isVi ? 'Ví dụ: Giọng tham chiếu Vũ Ninh' : '例如：羽宁参考音色'" /></label>
+          <label><span>{{ isVi ? 'Giới tính' : '性别' }}</span><select v-model="uploadGender"><option value="未设置">{{ isVi ? 'Chưa thiết lập' : '未设置' }}</option><option value="男">{{ isVi ? 'Nam' : '男' }}</option><option value="女">{{ isVi ? 'Nữ' : '女' }}</option><option value="其他">{{ isVi ? 'Khác' : '其他' }}</option></select></label>
+          <label class="audio-picker__file"><input type="file" accept="audio/mpeg,audio/wav,.mp3,.wav" @change="chooseFile" /><span>{{ uploadFile?.name || (isVi ? 'Chọn file MP3 / WAV, âm thanh dài có thể cắt trước khi tải lên' : '选择 MP3 / WAV，长音频可在上传前裁剪') }}</span></label>
           <section v-if="uploadPreviewUrl" class="audio-picker__clip-editor">
-            <header><div><Scissors :size="14" /><strong>上传前裁剪</strong></div><span><Clock3 :size="12" />原始 {{ formatDuration(uploadDuration) }} · 已选 {{ uploadClipDuration > 0 ? `${uploadClipDuration.toFixed(1)}s` : '--' }}</span></header>
+            <header><div><Scissors :size="14" /><strong>{{ isVi ? 'Cắt trước khi tải lên' : '上传前裁剪' }}</strong></div><span><Clock3 :size="12" />{{ isVi ? `Gốc ${formatDuration(uploadDuration)} · Đã chọn ${uploadClipDuration > 0 ? `${uploadClipDuration.toFixed(1)}s` : '--'}` : `原始 ${formatDuration(uploadDuration)} · 已选 ${uploadClipDuration > 0 ? `${uploadClipDuration.toFixed(1)}s` : '--'}` }}</span></header>
             <AudioRangeSlider
               v-model:start="uploadStart"
               v-model:end="uploadEnd"
@@ -240,44 +245,44 @@ onBeforeUnmount(releaseUploadPreview)
               :duration="uploadDuration"
               @loaded-duration="captureUploadDuration"
             />
-            <p v-if="uploadDuration > 30">原音频超过 30 秒，上传时会自动生成选中片段的 WAV 副本。</p>
-            <p v-else-if="!uploadClipValid">裁剪片段需为 1-30 秒，且不能超出原音频时长。</p>
+            <p v-if="uploadDuration > 30">{{ isVi ? 'File gốc vượt quá 30 giây, khi tải lên hệ thống sẽ tự động tạo bản WAV cho đoạn đã chọn.' : '原音频超过 30 秒，上传时会自动生成选中片段的 WAV 副本。' }}</p>
+            <p v-else-if="!uploadClipValid">{{ isVi ? 'Đoạn cắt phải từ 1-30 giây và không vượt quá thời lượng file gốc.' : '裁剪片段需为 1-30 秒，且不能超出原音频时长。' }}</p>
           </section>
-          <AppButton type="submit" variant="primary" size="sm" :loading="uploading" :disabled="!uploadFile || !uploadName.trim() || !uploadClipValid">上传并选择</AppButton>
+          <AppButton type="submit" variant="primary" size="sm" :loading="uploading" :disabled="!uploadFile || !uploadName.trim() || !uploadClipValid">{{ isVi ? 'Tải lên và chọn' : '上传并选择' }}</AppButton>
         </form>
         <section v-if="trimTarget" class="audio-picker__existing-trim">
-          <header><div><Scissors :size="15" /><span><strong>裁剪音色副本</strong><small>{{ trimTarget.nickname }} · 原始 {{ formatDuration(trimTarget.duration) }}</small></span></div><AppButton type="button" variant="ghost" size="sm" icon-only aria-label="关闭裁剪" @click="closeTrim"><X :size="15" /></AppButton></header>
+          <header><div><Scissors :size="15" /><span><strong>{{ isVi ? 'Cắt bản sao giọng đọc' : '裁剪音色副本' }}</strong><small>{{ translateVoiceNickname(trimTarget.nickname, isVi) }} · {{ isVi ? `Gốc ${formatDuration(trimTarget.duration)}` : `原始 ${formatDuration(trimTarget.duration)}` }}</small></span></div><AppButton type="button" variant="ghost" size="sm" icon-only :aria-label="isVi ? 'Đóng cắt âm thanh' : '关闭裁剪'" @click="closeTrim"><X :size="15" /></AppButton></header>
           <AudioRangeSlider
             v-model:start="trimStart"
             v-model:end="trimEnd"
             :src="trimTarget.audio_url"
             :duration="trimTarget.duration || 0"
           />
-          <footer><span>会创建新音色，不修改原音频及已有角色引用。</span><AppButton type="button" variant="primary" size="sm" :loading="trimming" :disabled="!trimClipValid" @click="createTrimmedReference">生成副本并选择</AppButton></footer>
+          <footer><span>{{ isVi ? 'Sẽ tạo giọng mới, không làm thay đổi âm thanh gốc và các liên kết nhân vật hiện có.' : '会创建新音色，不修改原音频及已有角色引用。' }}</span><AppButton type="button" variant="primary" size="sm" :loading="trimming" :disabled="!trimClipValid" @click="createTrimmedReference">{{ isVi ? 'Tạo bản sao và chọn' : '生成副本并选择' }}</AppButton></footer>
         </section>
         <p v-if="error" class="audio-picker__error" role="alert">{{ error }}</p>
         <div
           v-if="items.length"
           class="audio-picker__list"
           tabindex="0"
-          aria-label="音色列表，可滚动浏览"
+          :aria-label="isVi ? 'Danh sách giọng đọc, có thể cuộn để xem' : '音色列表，可滚动浏览'"
           :aria-busy="loading"
         >
           <article v-for="item in items" :key="item.id" :class="{ 'is-selected': selectedId === item.id }">
             <button type="button" class="audio-picker__item-main" @click="emit('choose', item)">
               <img v-if="item.avatar_url" :src="item.avatar_url" alt="" />
               <span v-else class="audio-picker__avatar"><Mic2 :size="18" /></span>
-              <span><strong>{{ item.nickname }}</strong><small>{{ item.gender }} · {{ item.source === 'upload' ? '用户上传' : '系统音色' }} · {{ formatDuration(item.duration) }}</small></span>
+              <span><strong>{{ translateVoiceNickname(item.nickname, isVi) }}</strong><small>{{ translateGender(item.gender, isVi) }} · {{ item.source === 'upload' ? (isVi ? 'Người dùng tải lên' : '用户上传') : (isVi ? 'Giọng hệ thống' : '系统音色') }} · {{ formatDuration(item.duration) }}</small></span>
             </button>
             <div class="audio-picker__item-player">
               <audio :src="item.audio_url" controls preload="metadata" @loadedmetadata="captureItemDuration(item, $event)" />
-              <AppButton v-if="item.source === 'upload'" type="button" variant="ghost" size="sm" icon-only :aria-label="`裁剪${item.nickname}`" title="裁剪并生成新音色" @click="openTrim(item)"><Scissors :size="15" /></AppButton>
+              <AppButton v-if="item.source === 'upload'" type="button" variant="ghost" size="sm" icon-only :aria-label="isVi ? `Cắt ${translateVoiceNickname(item.nickname, true)}` : `裁剪${item.nickname}`" :title="isVi ? 'Cắt và tạo giọng mới' : '裁剪并生成新音色'" @click="openTrim(item)"><Scissors :size="15" /></AppButton>
             </div>
           </article>
         </div>
-        <div v-if="loading && !items.length" class="audio-picker__state"><LoaderCircle class="is-spinning" :size="21" />正在加载音频库…</div>
-        <div v-else-if="!items.length" class="audio-picker__state">没有匹配的音色</div>
-        <footer><span>第 {{ page }} / {{ pages || 1 }} 页</span><AppButton v-if="page < pages" type="button" variant="ghost" size="sm" :loading="loading" @click="page += 1; load()">加载更多</AppButton></footer>
+        <div v-if="loading && !items.length" class="audio-picker__state"><LoaderCircle class="is-spinning" :size="21" />{{ isVi ? 'Đang tải kho âm thanh…' : '正在加载音频库…' }}</div>
+        <div v-else-if="!items.length" class="audio-picker__state">{{ isVi ? 'Không có giọng đọc phù hợp' : '没有匹配的音色' }}</div>
+        <footer><span>{{ isVi ? `Trang ${page} / ${pages || 1}` : `第 ${page} / ${pages || 1} 页` }}</span><AppButton v-if="page < pages" type="button" variant="ghost" size="sm" :loading="loading" @click="page += 1; load()">{{ isVi ? 'Tải thêm' : '加载更多' }}</AppButton></footer>
       </section>
     </div>
   </Teleport>

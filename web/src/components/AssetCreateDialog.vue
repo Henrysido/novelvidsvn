@@ -34,6 +34,7 @@ import { notice } from '@/shared/notice'
 import { estimateImageCost } from '@/shared/modelPricing'
 import { resolveCharacterFormMetadata } from '@/shared/characterMetadata'
 import { imageDerivativeUrl } from '@/shared/mediaDerivatives'
+import { translateCountry, translateOccupation, translateGender } from '@/shared/voiceI18n'
 import { AssetTypeEnum, TaskStatusEnum, type AiTask, type Asset, type AssetGenerationRecord, type AssetVariant, type AssetVariantDraft, type AudioReference, type DigitalHuman, type ImageGenerationModel } from '@/types'
 
 type AssetKind = 'character' | 'scene' | 'prop'
@@ -76,6 +77,7 @@ const props = withDefaults(defineProps<{ open: boolean; kind: AssetKind; novelId
 const emit = defineEmits<{ close: []; created: [asset: Asset]; saved: [asset: Asset] }>()
 
 const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 const config = computed(() => {
   const isVi = locale.value === 'vi-VN'
@@ -761,8 +763,8 @@ async function loadPublicPage(page: number) {
   publicPages.value = response.data.pagination.pages
   appendLibraryItems(response.data.items.map(item => ({
     key: `public-${item.id}`,
-    name: item.occupation || '公共数字人',
-    detail: `${item.country} · ${item.gender} · ${item.age} 岁`,
+    name: isVi.value ? (translateOccupation(item.occupation, true) || 'Nhân vật công khai') : (item.occupation || '公共数字人'),
+    detail: isVi.value ? `${translateCountry(item.country, true)} · ${translateGender(item.gender, true)} · ${item.age} tuổi` : `${item.country} · ${item.gender} · ${item.age} 岁`,
     image: item.image_url,
     source: 'public' as const,
     human: item,

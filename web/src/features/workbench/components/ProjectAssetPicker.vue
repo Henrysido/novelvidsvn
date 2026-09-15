@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Boxes, FolderKanban, Image as ImageIcon, Library, Search, UserRound, X } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { api } from '@/api'
+import { translateCountry, translateOccupation, translateGender } from '@/shared/voiceI18n'
 import type { Asset } from '@/types'
 import { AssetTypeEnum } from '@/types'
 import { assetTypePresentationOptions } from './assetTypePresentation'
@@ -28,6 +30,8 @@ const emit = defineEmits<{
   choose: [choice: ReusableAssetChoice]
 }>()
 
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 const scope = ref<AssetScope>('project')
 const items = ref<PickerItem[]>([])
 const search = ref('')
@@ -38,8 +42,10 @@ const loadingMore = ref(false)
 let loadVersion = 0
 
 const excluded = computed(() => new Set(props.excludedIds || []))
-const typeLabel = computed(() => assetTypePresentationOptions.find(item => item.value === String(props.assetType))?.label || '资产')
-const searchLabel = computed(() => `搜索${scope.value === 'public' ? '公共' : '项目'}${typeLabel.value}资产`)
+const typeLabel = computed(() => assetTypePresentationOptions.find(item => item.value === String(props.assetType))?.label || (isVi.value ? 'tài sản' : '资产'))
+const searchLabel = computed(() => isVi.value
+  ? `Tìm kiếm tài sản ${scope.value === 'public' ? 'công khai' : 'dự án'} ${typeLabel.value}`
+  : `搜索${scope.value === 'public' ? '公共' : '项目'}${typeLabel.value}资产`)
 
 function fallbackIcon() {
   if (props.assetType === AssetTypeEnum.PERSON) return UserRound
@@ -85,8 +91,8 @@ async function requestItems(nextPage: number, requestScope: AssetScope): Promise
     return {
       items: response.data.items.map(item => ({
         key: `public-human-${item.id}`,
-        name: item.occupation || '公共人物',
-        detail: `${item.country} · ${item.gender} · ${item.age} 岁`,
+        name: isVi.value ? (translateOccupation(item.occupation, true) || 'Nhân vật công khai') : (item.occupation || '公共人物'),
+        detail: isVi.value ? `${translateCountry(item.country, true)} · ${translateGender(item.gender, true)} · ${item.age} tuổi` : `${item.country} · ${item.gender} · ${item.age} 岁`,
         image: item.image_url,
         choice: { scope: 'public', digitalHuman: item },
       })),
@@ -156,22 +162,22 @@ watch(() => [props.open, props.assetType] as const, ([open]) => {
       <section class="project-asset-picker" role="dialog" aria-modal="true" aria-labelledby="project-asset-picker-title">
         <header>
           <div>
-            <h2 id="project-asset-picker-title">选择{{ typeLabel }}资产</h2>
-            <p>只显示与当前节点类型一致的资产。</p>
+            <h2 id="project-asset-picker-title">{{ isVi ? `Chọn tài sản ${typeLabel}` : `选择${typeLabel}资产` }}</h2>
+            <p>{{ isVi ? 'Chỉ hiển thị tài sản phù hợp với loại node hiện tại.' : '只显示与当前节点类型一致的资产。' }}</p>
           </div>
-          <AppButton type="button" variant="ghost" size="sm" icon-only aria-label="关闭" @click="emit('close')"><X :size="18" /></AppButton>
+          <AppButton type="button" variant="ghost" size="sm" icon-only :aria-label="isVi ? 'Đóng' : '关闭'" @click="emit('close')"><X :size="18" /></AppButton>
         </header>
-        <nav class="project-asset-picker__scope" aria-label="资产范围">
-          <button type="button" :class="{ 'is-active': scope === 'public' }" :aria-pressed="scope === 'public'" @click="changeScope('public')"><Library :size="15" />公共资产</button>
-          <button type="button" :class="{ 'is-active': scope === 'project' }" :aria-pressed="scope === 'project'" @click="changeScope('project')"><FolderKanban :size="15" />项目资产</button>
+        <nav class="project-asset-picker__scope" :aria-label="isVi ? 'Phạm vi tài nguyên' : '资产范围'">
+          <button type="button" :class="{ 'is-active': scope === 'public' }" :aria-pressed="scope === 'public'" @click="changeScope('public')"><Library :size="15" />{{ isVi ? 'Tài nguyên công khai' : '公共资产' }}</button>
+          <button type="button" :class="{ 'is-active': scope === 'project' }" :aria-pressed="scope === 'project'" @click="changeScope('project')"><FolderKanban :size="15" />{{ isVi ? 'Tài nguyên dự án' : '项目资产' }}</button>
         </nav>
         <form class="project-asset-picker__search" @submit.prevent="load()">
           <Search :size="16" />
           <input v-model="search" type="search" :placeholder="searchLabel" :aria-label="searchLabel">
-          <AppButton type="submit" variant="secondary" size="sm">搜索</AppButton>
+          <AppButton type="submit" variant="secondary" size="sm">{{ isVi ? 'Tìm kiếm' : '搜索' }}</AppButton>
         </form>
         <div class="project-asset-picker__grid">
-          <p v-if="loading" class="project-asset-picker__state">正在读取{{ scope === 'public' ? '公共' : '项目' }}资产…</p>
+          <p v-if="loading" class="project-asset-picker__state">{{ isVi ? `Đang tải tài sản ${scope === 'public' ? 'công khai' : 'dự án'}…` : `正在读取${scope === 'public' ? '公共' : '项目'}资产…` }}</p>
           <button v-for="item in items" v-else :key="item.key" type="button" @click="choose(item.choice)">
             <span class="project-asset-picker__thumb">
               <img v-if="item.image" :src="item.image" :alt="item.name" loading="lazy">
@@ -179,11 +185,11 @@ watch(() => [props.open, props.assetType] as const, ([open]) => {
             </span>
             <span><strong>{{ item.name }}</strong><small>{{ item.detail }}</small></span>
           </button>
-          <p v-if="!loading && !items.length" class="project-asset-picker__state">暂无可复用的{{ typeLabel }}{{ scope === 'public' ? '公共' : '项目' }}资产</p>
+          <p v-if="!loading && !items.length" class="project-asset-picker__state">{{ isVi ? `Chưa có tài sản ${typeLabel} ${scope === 'public' ? 'công khai' : 'dự án'} có thể tái sử dụng` : `暂无可复用的${typeLabel}${scope === 'public' ? '公共' : '项目'}资产` }}</p>
         </div>
         <footer>
-          <span>已加载 {{ items.length }} 个{{ typeLabel }}资产</span>
-          <AppButton v-if="page < pages" type="button" variant="secondary" size="sm" :loading="loadingMore" @click="load(false)">加载更多</AppButton>
+          <span>{{ isVi ? `Đã tải ${items.length} tài sản ${typeLabel}` : `已加载 ${items.length} 个${typeLabel}资产` }}</span>
+          <AppButton v-if="page < pages" type="button" variant="secondary" size="sm" :loading="loadingMore" @click="load(false)">{{ isVi ? 'Tải thêm' : '加载更多' }}</AppButton>
         </footer>
       </section>
     </div>
