@@ -1,4 +1,4 @@
-# 🚀 Hướng Dẫn Khởi Chạy Nhanh NovelVids Studio
+# 🚀 Hướng Dẫn Khởi Chạy Nhanh HenryVids Studio
 
 Ứng dụng đã được đóng gói hoàn chỉnh bằng Docker. Bạn có thể sử dụng các cách sau để bật/tắt nhanh mà không cần nhớ câu lệnh phức tạp.
 

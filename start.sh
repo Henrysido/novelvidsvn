@@ -4,12 +4,12 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIR"
 
-echo "🚀 Đang khởi động NovelVids Studio (Docker)..."
+echo "🚀 Đang khởi động HenryVids Studio (Docker)..."
 docker compose up -d
 
 echo ""
 echo "======================================================="
-echo " 🎉 NovelVids Studio đã sẵn sàng hoạt động!"
+echo " 🎉 HenryVids Studio đã sẵn sàng hoạt động!"
 echo " 🌐 Địa chỉ web: http://localhost:8080"
 echo " 📚 Tài liệu API: http://localhost:8080/docs"
 echo "======================================================="
