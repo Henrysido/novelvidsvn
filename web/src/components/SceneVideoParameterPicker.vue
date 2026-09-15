@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { Check, ChevronDown, ChevronUp, Monitor, TimerReset } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import type { VideoGenerationModel } from '@/types'
 import { claimExclusivePopover } from '@/shared/exclusivePopover'
+
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 const props = withDefaults(defineProps<{
   model: VideoGenerationModel | null
@@ -48,7 +52,7 @@ const selectedDuration = computed(() => {
   const maximum = capabilities.value?.duration_max || 30
   return Math.max(minimum, Math.min(maximum, Math.round(props.duration || minimum)))
 })
-const summary = computed(() => `${selectedDuration.value}秒 · ${selectedRatio.value === 'adaptive' ? '自适应' : selectedRatio.value} · ${selectedResolution.value}`)
+const summary = computed(() => `${selectedDuration.value}${isVi.value ? 's' : '秒'} · ${selectedRatio.value === 'adaptive' ? (isVi.value ? 'Tự thích ứng' : '自适应') : selectedRatio.value} · ${selectedResolution.value}`)
 const summaryIconStyle = computed(() => {
   if (selectedRatio.value === 'adaptive') return { width: '20px', height: '12px' }
   const [rawWidth, rawHeight] = selectedRatio.value.split(':').map(Number)
@@ -169,7 +173,7 @@ onBeforeUnmount(close)
     :disabled="!model"
     :aria-expanded="open"
     aria-haspopup="dialog"
-    :aria-label="showReturnLastFrame ? '设置视频时长、比例、分辨率和尾帧衔接' : '设置视频时长、比例和分辨率'"
+    :aria-label="showReturnLastFrame ? (isVi ? 'Cài đặt thời lượng, tỷ lệ, độ phân giải và khung hình cuối' : '设置视频时长、比例、分辨率和尾帧衔接') : (isVi ? 'Cài đặt thời lượng, tỷ lệ và độ phân giải' : '设置视频时长、比例和分辨率')"
     @click="toggle"
   >
     <span
@@ -191,11 +195,11 @@ onBeforeUnmount(close)
         class="video-parameter-panel"
         :style="panelStyle"
         role="dialog"
-        aria-label="视频生成参数"
+        :aria-label="isVi ? 'Thông số sinh video' : '视频生成参数'"
       >
         <header>
-          <div><TimerReset :size="15" /><strong>视频时长</strong></div>
-          <b>当前 {{ selectedDuration }} 秒</b>
+          <div><TimerReset :size="15" /><strong>{{ isVi ? 'Thời lượng video' : '视频时长' }}</strong></div>
+          <b>{{ isVi ? `Hiện tại ${selectedDuration}s` : `当前 ${selectedDuration} 秒` }}</b>
         </header>
         <input
           class="duration-slider"
@@ -203,16 +207,16 @@ onBeforeUnmount(close)
           :min="capabilities?.duration_min || 4"
           :max="capabilities?.duration_max || 30"
           :value="selectedDuration"
-          :aria-label="`视频时长 ${selectedDuration} 秒`"
+          :aria-label="isVi ? `Thời lượng video ${selectedDuration}s` : `视频时长 ${selectedDuration} 秒`"
           @input="updateDuration"
         />
         <div class="duration-limits">
-          <span>最短 {{ capabilities?.duration_min || 4 }} 秒</span>
-          <span>最长 {{ capabilities?.duration_max || 30 }} 秒</span>
+          <span>{{ isVi ? `Tối thiểu ${capabilities?.duration_min || 4}s` : `最短 ${capabilities?.duration_min || 4} 秒` }}</span>
+          <span>{{ isVi ? `Tối đa ${capabilities?.duration_max || 30}s` : `最长 ${capabilities?.duration_max || 30} 秒` }}</span>
         </div>
 
         <div class="parameter-section">
-          <h3>画面比例</h3>
+          <h3>{{ isVi ? 'Tỷ lệ khung hình' : '画面比例' }}</h3>
           <div class="option-grid ratio-grid">
             <button
               v-for="ratio in ratios"
@@ -223,13 +227,13 @@ onBeforeUnmount(close)
             >
               <span v-if="ratio === 'adaptive'" class="adaptive-ratio">AUTO</span>
               <i v-else :style="ratioShape(ratio)" />
-              <span>{{ ratio === 'adaptive' ? '自适应' : ratio }}</span>
+              <span>{{ ratio === 'adaptive' ? (isVi ? 'Tự thích ứng' : '自适应') : ratio }}</span>
             </button>
           </div>
         </div>
 
         <div class="parameter-section">
-          <h3>分辨率</h3>
+          <h3>{{ isVi ? 'Độ phân giải' : '分辨率' }}</h3>
           <div class="option-grid resolution-grid">
             <button
               v-for="resolution in capabilities?.resolutions || []"
@@ -253,7 +257,7 @@ onBeforeUnmount(close)
           :aria-checked="returnLastFrame"
           @click="emit('update:returnLastFrame', !returnLastFrame)"
         >
-          <span><strong>返回尾帧</strong><small>完成后自动作为下一镜头的参考图，章节末尾会衔接下一章</small></span>
+          <span><strong>{{ isVi ? 'Trả về khung hình cuối' : '返回尾帧' }}</strong><small>{{ isVi ? 'Tự động làm ảnh tham chiếu cho cảnh tiếp theo sau khi hoàn thành, cuối tập sẽ nối sang tập sau' : '完成后自动作为下一镜头的参考图，章节末尾会衔接下一章' }}</small></span>
           <i><Check v-if="returnLastFrame" :size="13" /></i>
         </button>
       </section>

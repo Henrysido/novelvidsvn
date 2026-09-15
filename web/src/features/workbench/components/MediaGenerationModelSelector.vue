@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import type { EnumItem } from '@/types'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import WorkbenchSelect from './WorkbenchSelect.vue'
+
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 const props = defineProps<{
   modelValue: number | null
@@ -36,8 +40,8 @@ function select(value: string) {
     <WorkbenchSelect
       :model-value="selectedValue"
       :options="selectOptions"
-      :label="label || '视频模型'"
-      :placeholder="`选择${label || '视频模型'}`"
+      :label="label || (isVi ? 'Mô hình video' : '视频模型')"
+      :placeholder="isVi ? `Chọn ${label || 'mô hình video'}` : `选择${label || '视频模型'}`"
       @update:model-value="select"
     />
   </div>

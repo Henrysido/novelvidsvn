@@ -2,11 +2,15 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { Check, ChevronDown } from 'lucide-vue-next'
 import AppButton from '@/components/AppButton.vue'
+import { useI18n } from 'vue-i18n'
 
 export interface AppMultiSelectOption {
   value: string
   label: string
 }
+
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 const props = withDefaults(defineProps<{
   modelValue: string[]
@@ -16,7 +20,6 @@ const props = withDefaults(defineProps<{
   maxMenuHeight?: number
   disabled?: boolean
 }>(), {
-  placeholder: '请选择',
   maxMenuHeight: 320,
   disabled: false,
 })
@@ -29,10 +32,11 @@ const open = ref(false)
 const menuPosition = ref({ top: 0, left: 0, width: 0 })
 const opensUp = ref(false)
 
+const effectivePlaceholder = computed(() => props.placeholder || (isVi.value ? 'Vui lòng chọn' : '请选择'))
 const selectedOptions = computed(() => props.options.filter(option => props.modelValue.includes(option.value)))
 const displayValue = computed(() => selectedOptions.value.length
-  ? selectedOptions.value.map(option => option.label).join('、')
-  : props.placeholder)
+  ? selectedOptions.value.map(option => option.label).join(isVi.value ? ', ' : '、')
+  : effectivePlaceholder.value)
 const menuStyle = computed(() => ({
   width: `${menuPosition.value.width}px`,
   top: `${menuPosition.value.top}px`,

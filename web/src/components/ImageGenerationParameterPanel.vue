@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import type { ImageGenerationCapabilities } from '@/types'
 import { claimExclusivePopover } from '@/shared/exclusivePopover'
+
+const { locale } = useI18n()
+const isVi = computed(() => locale.value === 'vi-VN')
 
 export interface ImageGenerationParameters {
   clarity: string
@@ -40,11 +44,14 @@ const panelStyle = computed(() => ({
 const summary = computed(() => [
   props.modelValue.aspectRatio,
   clarityLabel(props.modelValue.clarity),
-  '1张',
+  isVi.value ? '1 ảnh' : '1张',
   props.modelValue.outputFormat.toUpperCase(),
 ].filter(Boolean).join(' · '))
 
 function clarityLabel(value: string) {
+  if (isVi.value) {
+    return ({ low: 'Thấp', medium: 'Trung bình', high: 'Cao' } as Record<string, string>)[value] || value
+  }
   return ({ low: '低', medium: '中', high: '高' } as Record<string, string>)[value] || value
 }
 
@@ -139,21 +146,21 @@ onUnmounted(() => {
 
 <template>
   <div ref="root" class="image-parameters" :class="{ 'is-open': open, 'is-compact': compact }">
-    <button type="button" class="image-parameters__trigger" :disabled="disabled || !capabilities" aria-label="设置图片生成参数" aria-haspopup="dialog" :aria-expanded="open" @click="toggle">
+    <button type="button" class="image-parameters__trigger" :disabled="disabled || !capabilities" :aria-label="isVi ? 'Cài đặt thông số sinh ảnh' : '设置图片生成参数'" aria-haspopup="dialog" :aria-expanded="open" @click="toggle">
       <i class="image-parameters__trigger-ratio" :style="ratioStyle(modelValue.aspectRatio, 20, 15, 6)" data-ratio-icon aria-hidden="true" />
       <span>{{ summary }}</span>
       <ChevronDown :size="15" aria-hidden="true" />
     </button>
     <Teleport to="body">
-      <section v-if="open && capabilities" ref="panel" class="image-parameters__panel" :class="{ 'is-up': opensUp }" :style="panelStyle" role="dialog" aria-label="图片生成参数">
+      <section v-if="open && capabilities" ref="panel" class="image-parameters__panel" :class="{ 'is-up': opensUp }" :style="panelStyle" role="dialog" :aria-label="isVi ? 'Thông số sinh ảnh' : '图片生成参数'">
         <fieldset>
-          <legend>清晰度</legend>
+          <legend>{{ isVi ? 'Độ nét' : '清晰度' }}</legend>
           <div class="image-parameters__segments">
             <button v-for="value in capabilities.clarities" :key="value" type="button" :class="{ 'is-selected': modelValue.clarity === value }" :aria-pressed="modelValue.clarity === value" @click="update('clarity', value)">{{ clarityLabel(value) }}</button>
           </div>
         </fieldset>
         <fieldset>
-          <legend>比例</legend>
+          <legend>{{ isVi ? 'Tỷ lệ khung hình' : '比例' }}</legend>
           <div class="image-parameters__ratios">
             <button v-for="value in capabilities.aspect_ratios" :key="value" type="button" :class="{ 'is-selected': modelValue.aspectRatio === value }" :aria-pressed="modelValue.aspectRatio === value" @click="update('aspectRatio', value)">
               <i :style="ratioStyle(value)" aria-hidden="true" />
@@ -162,7 +169,7 @@ onUnmounted(() => {
           </div>
         </fieldset>
         <fieldset>
-          <legend>图片格式</legend>
+          <legend>{{ isVi ? 'Định dạng ảnh' : '图片格式' }}</legend>
           <div class="image-parameters__segments">
             <button v-for="value in capabilities.output_formats" :key="value" type="button" :class="{ 'is-selected': modelValue.outputFormat === value }" :aria-pressed="modelValue.outputFormat === value" @click="update('outputFormat', value)">{{ value.toUpperCase() }}</button>
           </div>

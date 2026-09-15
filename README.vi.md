@@ -20,7 +20,7 @@ Hệ thống hỗ trợ 2 chế độ sáng tạo:
 
 ## 🚀 Tính năng nổi bật
 
-- **Đa ngôn ngữ chuẩn chỉnh:** Tích hợp sẵn bộ ngôn ngữ **Tiếng Việt** (mặc định) và **简体中文** với nút chuyển đổi ngôn ngữ nhanh tiện lợi ở thanh bên.
+- **Đa ngôn ngữ chuẩn chỉnh:** Tích hợp sẵn bộ ngôn ngữ **Tiếng Việt** (mặc định) và **简体中文** với nút chuyển đổi ngôn ngữ nhanh tiện lợi ở thanh bên. Việt hóa 100% kho tài nguyên (80 mẫu giọng nói, diễn viên ảo, quốc gia, nghề nghiệp), bảng phân cảnh và toàn bộ giao diện quản lý cấu hình mô hình (Thêm mô hình mới, mục đích & năng lực sử dụng, giao thức kết nối, bảng chọn thông số video và hình ảnh).
 - **Visual Styles đa dạng:** Hỗ trợ 14+ phong cách thị giác (Điện ảnh tả thực, 2D Anime Nhật Bản, Webtoon Hàn Quốc, 3D Cổ phong, 3D Tiên hiệp, Cyberpunk CG, Hoạt hình 3D, v.v.).
 - **Tương thích nhiều mô hình AI:**
   - **LLM:** OpenAI, Claude, Google Gemini, DeepSeek, Qwen (OpenAI-compatible).

@@ -115,11 +115,28 @@ function configTaskTypes(item: AiModelConfig) {
 const selectedCategory = computed(() => categories.find(item => item.id === selectedCategoryId.value) ?? categories[0])
 const isEditing = computed(() => editingConfigId.value !== null)
 const selectedConfigs = computed(() => configs.value.filter(item => configTaskTypes(item).some(value => selectedCategory.value.taskTypes.includes(value))))
+const TASK_TYPE_VI: Record<number, string> = {
+  1: 'Trích xuất thực thể & Hiểu nội dung',
+  2: 'Ảnh tham chiếu nhân vật & bối cảnh',
+  3: 'Kế hoạch phân cảnh & Prompt',
+  4: 'Kết xuất phân cảnh video',
+  5: 'Phân tích dự án',
+  6: 'Bóc tách Remake',
+}
+const TASK_TYPE_ZH: Record<number, string> = {
+  1: '内容理解与人物提取',
+  2: '角色与场景参考图',
+  3: '分镜规划与提示词',
+  4: '视频片段生成',
+  5: '项目分析',
+  6: '重制',
+}
+
 const taskOptions = computed(() => selectedCategory.value.taskTypes.map(value => ({
   value: String(value),
-  label: taskTypes.value.find(item => item.value === value)?.label || (isVi.value
-    ? ({ 1: 'Trích xuất thực thể & Hiểu nội dung', 2: 'Ảnh tham chiếu nhân vật & bối cảnh', 3: 'Kế hoạch phân cảnh & Prompt', 4: 'Kết xuất phân cảnh video', 5: 'Phân tích dự án', 6: 'Bóc tách Remake' }[value] ?? `Nhiệm vụ ${value}`)
-    : ({ 1: '内容理解与人物提取', 2: '角色与场景参考图', 3: '分镜规划与提示词', 4: '视频片段生成', 5: '项目分析', 6: '重制' }[value] ?? `任务 ${value}`)),
+  label: isVi.value
+    ? (TASK_TYPE_VI[value] ?? `Nhiệm vụ ${value}`)
+    : (taskTypes.value.find(item => item.value === value)?.label || TASK_TYPE_ZH[value] || `任务 ${value}`),
 })))
 
 const generationCapabilities = ref<GenerationCapabilities>({ image: {}, video: {} })
@@ -168,10 +185,26 @@ function activeCount(category: ModelCategory) {
   return configsFor(category).filter(item => item.is_active).length
 }
 
+const TASK_LABEL_SHORT_VI: Record<number, string> = {
+  1: 'Hiểu nội dung',
+  2: 'Ảnh tham chiếu',
+  3: 'Phân cảnh',
+  4: 'Sinh video',
+  5: 'Phân tích dự án',
+  6: 'Remake',
+}
+const TASK_LABEL_SHORT_ZH: Record<number, string> = {
+  1: '内容理解',
+  2: '参考图生成',
+  3: '分镜规划',
+  4: '视频生成',
+  5: '项目分析',
+  6: '重制',
+}
+
 function taskLabel(value: number) {
-  return taskTypes.value.find(item => item.value === value)?.label || (isVi.value
-    ? ({ 1: 'Hiểu nội dung', 2: 'Ảnh tham chiếu', 3: 'Phân cảnh', 4: 'Sinh video', 5: 'Phân tích dự án', 6: 'Remake' }[value] ?? `Nhiệm vụ ${value}`)
-    : ({ 1: '内容理解', 2: '参考图生成', 3: '分镜规划', 4: '视频生成', 5: '项目分析', 6: '重制' }[value] ?? `任务 ${value}`))
+  if (isVi.value) return TASK_LABEL_SHORT_VI[value] ?? `Nhiệm vụ ${value}`
+  return taskTypes.value.find(item => item.value === value)?.label || TASK_LABEL_SHORT_ZH[value] || `任务 ${value}`
 }
 
 function protocolLabel(value: ImageApiProtocol) {
@@ -189,16 +222,22 @@ function videoProtocolFor(modelType: VideoGenerationModelType | ''): ImageApiPro
 const selectedVideoProtocolLabel = computed(() => protocolLabel(videoProtocolFor(form.value.video_model_type)))
 const selectedVideoProtocolHint = computed(() => {
   if (form.value.video_model_type === 'minimax_h3') {
-    return '提交到 /v2/video_generation，并从 /v2/query/video_generation/{task_id} 查询结果。'
+    return isVi.value
+      ? 'Gửi yêu cầu tới /v2/video_generation và tra cứu kết quả từ /v2/query/video_generation/{task_id}.'
+      : '提交到 /v2/video_generation，并从 /v2/query/video_generation/{task_id} 查询结果。'
   }
   if (form.value.video_model_type === 'wan_3') {
-    return '请将 YOUR_WORKSPACE_ID 替换为百炼业务空间 ID；提交到 video-synthesis，并从 /api/v1/tasks/{task_id} 查询。'
+    return isVi.value
+      ? 'Vui lòng thay thế YOUR_WORKSPACE_ID bằng ID không gian làm việc DashScope; gửi yêu cầu tới video-synthesis và tra cứu từ /api/v1/tasks/{task_id}.'
+      : '请将 YOUR_WORKSPACE_ID 替换为百炼业务空间 ID；提交到 video-synthesis，并从 /api/v1/tasks/{task_id} 查询。'
   }
-  return '提交到 /contents/generations/tasks，并通过任务 ID 异步查询结果。'
+  return isVi.value
+    ? 'Gửi yêu cầu tới /contents/generations/tasks và tra cứu kết quả bất đồng bộ qua Task ID.'
+    : '提交到 /contents/generations/tasks，并通过任务 ID 异步查询结果。'
 })
 
 function providerHost(baseUrl?: string) {
-  if (!baseUrl) return '未设置接口'
+  if (!baseUrl) return isVi.value ? 'Chưa đặt giao diện' : '未设置接口'
   try {
     return new URL(baseUrl).host
   } catch {
@@ -446,7 +485,7 @@ onMounted(load)
       <AppButton v-if="activeSection === 'models'" variant="primary" size="lg" type="button" @click="openCreate()"><Plus :size="16" />{{ isVi ? 'Thêm mô hình mới' : '添加模型' }}</AppButton>
     </header>
 
-    <AppTabs class="settings-section-tabs" :model-value="activeSection" :items="settingsTabs" label="设置分类" @update:model-value="changeSettingsSection" />
+    <AppTabs class="settings-section-tabs" :model-value="activeSection" :items="settingsTabs" :label="isVi ? 'Phân loại cài đặt' : '设置分类'" @update:model-value="changeSettingsSection" />
 
     <template v-if="activeSection === 'models'">
     <section v-if="isTeamAdmin" class="model-source-banner">
@@ -455,7 +494,7 @@ onMounted(load)
         <p>{{ isVi ? 'Mục này chỉ quản lý mô hình riêng của đội nhóm; mô hình nền tảng không hiển thị tại đây. Khi chưa cấu hình, tác vụ sẽ dùng mô hình nền tảng, phí từ số dư đội nhóm (费用从团队余额扣除).' : '此处只管理本团队自己的模型配置；平台模型不对团队显示。未配置时，生成任务将使用平台模型，费用从团队余额扣除。' }}</p>
       </div>
     </section>
-    <section class="model-category-grid" aria-label="模型能力分类">
+    <section class="model-category-grid" :aria-label="isVi ? 'Phân loại năng lực mô hình' : '模型能力分类'">
       <AppButton
         v-for="category in categories"
         :key="category.id"
@@ -512,8 +551,8 @@ onMounted(load)
                 <AppButton variant="soft" size="sm" type="button" :title="isVi ? 'Tạm dừng cấu hình' : '停用配置'" @click="deactivate(item)"><Power :size="15" /><span>{{ isVi ? 'Tạm dừng' : '停用' }}</span></AppButton>
               </template>
               <span class="config-icon-actions">
-                <AppButton variant="secondary" size="sm" icon-only type="button" aria-label="编辑配置" :title="isVi ? 'Chỉnh sửa cấu hình' : '编辑配置'" @click="openEdit(item)"><Pencil :size="15" /></AppButton>
-                <AppButton variant="danger" size="sm" icon-only type="button" aria-label="删除配置" :title="isVi ? 'Xóa cấu hình' : '删除配置'" @click="remove(item)"><Trash2 :size="15" /></AppButton>
+                <AppButton variant="secondary" size="sm" icon-only type="button" :aria-label="isVi ? 'Chỉnh sửa cấu hình' : '编辑配置'" :title="isVi ? 'Chỉnh sửa cấu hình' : '编辑配置'" @click="openEdit(item)"><Pencil :size="15" /></AppButton>
+                <AppButton variant="danger" size="sm" icon-only type="button" :aria-label="isVi ? 'Xóa cấu hình' : '删除配置'" :title="isVi ? 'Xóa cấu hình' : '删除配置'" @click="remove(item)"><Trash2 :size="15" /></AppButton>
               </span>
             </template>
             <span v-else class="official-badge" :title="isVi ? 'Cấu hình nền tảng do hệ thống quản lý, đội nhóm chỉ có quyền đọc' : '官方配置由平台维护，团队管理员只读'">{{ isVi ? 'Chỉ đọc' : '只读' }}</span>
@@ -590,14 +629,14 @@ onMounted(load)
     <div v-if="showCreate" class="model-modal-backdrop" @click.self="showCreate = false">
       <form class="model-modal" autocomplete="off" @submit.prevent="saveConfig">
         <header>
-          <div><AppIconTile :tone="iconTone(selectedCategory.id)" size="sm"><component :is="selectedCategory.icon" :size="18" /></AppIconTile><div><small>{{ isEditing ? 'EDIT MODEL' : 'ADD MODEL' }}</small><h2>{{ isEditing ? (isVi ? 'Chỉnh sửa' : '编辑') : (isVi ? 'Thêm mới' : '添加') }} {{ selectedCategory.label }}</h2></div></div>
+          <div><AppIconTile :tone="iconTone(selectedCategory.id)" size="sm"><component :is="selectedCategory.icon" :size="18" /></AppIconTile><div><small>{{ isEditing ? (isVi ? 'CHỈNH SỬA MÔ HÌNH' : 'EDIT MODEL') : (isVi ? 'THÊM MÔ HÌNH MỚI' : 'ADD MODEL') }}</small><h2>{{ isEditing ? (isVi ? 'Chỉnh sửa' : '编辑') : (isVi ? 'Thêm mới' : '添加') }} {{ selectedCategory.label }}</h2></div></div>
           <AppButton variant="soft" size="sm" icon-only type="button" :aria-label="isVi ? 'Đóng' : '关闭'" @click="showCreate = false"><X :size="18" /></AppButton>
         </header>
 
         <div class="model-form-grid">
           <label v-if="selectedCategory.taskTypes.length > 1" class="is-full">
             <span>{{ isVi ? 'Mục đích & Năng lực sử dụng' : '能力用途' }}</span>
-            <AppMultiSelect v-model="form.task_types" :ariaLabel="isVi ? 'Năng lực sử dụng' : '能力用途'" :options="taskOptions" />
+            <AppMultiSelect v-model="form.task_types" :placeholder="isVi ? 'Vui lòng chọn năng lực' : '请选择'" :ariaLabel="isVi ? 'Năng lực sử dụng' : '能力用途'" :options="taskOptions" />
             <small>{{ isVi ? 'Có thể chọn nhiều mục đích cùng lúc; chọn \"Bóc tách Remake\" nếu mô hình hỗ trợ video đầu vào.' : '可同时选择多个用途；勾选“重制”表示该模型支持视频输入并可用于来源视频拆解。' }}</small>
           </label>
           <label class="is-full"><span>{{ isVi ? 'Tên cấu hình gợi nhớ' : '配置名称' }}</span><input v-model="form.name" name="model-config-name" required autocomplete="off" :placeholder="isVi ? 'Ví dụ: Doubao Seedance 2.5 hoặc DeepSeek Chat' : '例如：豆包 Seed 1.6'" /></label>
@@ -633,17 +672,17 @@ onMounted(load)
           </label>
           <label v-if="selectedCategory.id === 'video'" class="is-full">
             <span>{{ isVi ? 'Giao thức API' : '接口协议' }}</span>
-            <output class="model-readonly-value" aria-label="视频接口协议">{{ selectedVideoProtocolLabel }}</output>
+            <output class="model-readonly-value" :aria-label="isVi ? 'Giao thức API video' : '视频接口协议'">{{ selectedVideoProtocolLabel }}</output>
             <small>{{ selectedVideoProtocolHint }}</small>
           </label>
           <label v-if="selectedCategory.id === 'image'" class="is-full">
             <span>{{ isVi ? 'Giao thức API' : '接口协议' }}</span>
             <select v-model="form.api_protocol" name="image-api-protocol">
-              <option value="openai_compatible">OpenAI 兼容（GPT Image / 中转服务）</option>
-              <option value="openrouter_compatible">OpenRouter 兼容（/images）</option>
-              <option value="volcengine_ark">火山方舟 Seedream</option>
+              <option value="openai_compatible">{{ isVi ? 'Tương thích OpenAI (GPT Image / Dịch vụ trung gian)' : 'OpenAI 兼容（GPT Image / 中转服务）' }}</option>
+              <option value="openrouter_compatible">{{ isVi ? 'Tương thích OpenRouter (/images)' : 'OpenRouter 兼容（/images）' }}</option>
+              <option value="volcengine_ark">{{ isVi ? 'ByteDance Volcengine Ark (Seedream)' : '火山方舟 Seedream' }}</option>
             </select>
-            <small>{{ isVi ? 'Giao thức quyết định cấu trúc gửi tin và căn chỉnh kích thước.' : '协议决定请求字段与尺寸适配，不依赖模型名称猜测供应商。' }}</small>
+            <small>{{ isVi ? 'Giao thức quyết định cấu trúc gửi tin và căn chỉnh kích thước, không dựa vào tên mô hình để đoán nhà cung cấp.' : '协议决定请求字段与尺寸适配，不依赖模型名称猜测供应商。' }}</small>
           </label>
           <label v-if="selectedCategory.id === 'llm'">
             <span>{{ isVi ? 'Giới hạn ký tự ngữ cảnh' : '上下文字符上限' }}</span>

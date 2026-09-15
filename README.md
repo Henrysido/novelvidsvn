@@ -93,7 +93,7 @@ Giao diện **HenryVids Studio** được thiết kế lại hoàn toàn theo ph
 - **Hệ màu chủ đạo**: **Violet Cyber & Neon Purple** (`#7c3aed` / `#a855f7`) mang lại cảm giác hiện đại, đậm chất studio điện ảnh tương lai.
 - **Dark / Light Theme**: Tối ưu hóa sâu cho cả chế độ Sáng và Tối, bảo vệ mắt khi làm việc ban đêm và làm nổi bật màu sắc video.
 - **Trang chủ Hero Portal (`HomePage.vue`)**: Trung tâm điều khiển trực quan với logo thương hiệu HenryVids, lối tắt nhanh vào Phim ngắn AI, Xưởng Remake, Dự án và Thư viện tài sản.
-- **Việt hóa 100% chuyên nghiệp**: Loại bỏ hoàn toàn các từ Hán-Việt máy móc, thay bằng thuật ngữ chuẩn ngành điện ảnh (Storyboard, Keyframe Continuity, Character Bible, Phân cảnh, Dựng phim...).
+- **Việt hóa 100% chuyên nghiệp**: Loại bỏ hoàn toàn các từ Hán-Việt máy móc, thay bằng thuật ngữ chuẩn ngành điện ảnh. Bản địa hóa toàn bộ kho tài nguyên (80 mẫu giọng nói, diễn viên ảo, quốc gia, nghề nghiệp), bảng phân cảnh, giao diện quản lý cấu hình mô hình (Thêm mô hình mới, phân loại mục đích & năng lực sử dụng, giao thức kết nối) và các thanh chọn thông số kết xuất video/hình ảnh.
 
 ---
 
